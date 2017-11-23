@@ -1,5 +1,6 @@
 import requests
 import threading
+import logging
 from queue import Queue
 from abc import ABCMeta, abstractclassmethod
 from config import OJ_ACCOUNTS, get_header
@@ -56,12 +57,18 @@ class VJudge(threading.Thread):
                 password = accounts[username]
                 client = self._get_oj_client(oj_name, auth=(username, password))
                 if client is not None:
+                    logging.info("user '{}' log in to {} successfully".format(username, oj_name))
                     available = True
                     threading.Thread(target=self.judge, args=(client, oj_name, username), daemon=True).start()
             if available:
                 self.available_ojs.append(oj_name)
                 threading.Thread(target=self.refresh_status, args=(oj_name,), daemon=True).start()
         threading.Thread(target=self.handle_requests, daemon=True).start()
+        if self.available_ojs:
+            logging.info('{} are available'.format(' and '.join(self.available_ojs)))
+        else:
+            logging.warning('there is no oj is available')
+
         self.refresh_status_all()
 
     def judge(self, client, oj_name, remote_user_id):
@@ -128,11 +135,16 @@ class VJudge(threading.Thread):
         try:
             oj = importlib.import_module('.' + oj_name, __package__)
         except ModuleNotFoundError:
+            logging.error('oj {} is unavailable')
             return
         try:
             client = oj.Client()
             if auth is not None:
                 client.login(*auth)
             return client
-        except (exceptions.LoginError, exceptions.ConnectionError):
-            pass
+        except exceptions.LoginError:
+            logging.error("user '{}' log in to {} failed: "
+                          "no such user or wrong password".format(auth[0], oj_name))
+        except exceptions.ConnectionError:
+            logging.error("user '{}' log in to {} failed: "
+                          "network is unreachable".format(auth[0], oj_name))
