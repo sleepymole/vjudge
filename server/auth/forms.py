@@ -21,7 +21,7 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Register')
 
     def validate_username(self, field):
-        if db.session.query(User).filter_by(username=field.data).first():
+        if User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already in use')
 
 

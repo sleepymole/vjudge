@@ -68,7 +68,7 @@ class VJudge(threading.Thread):
         queue = self.judge_queues[oj_name]
         while True:
             run_id = queue.get()
-            submission = db.session.query(Submission).filter_by(run_id=run_id).one()
+            submission = Submission.query.filter_by(run_id=run_id).one()
             try:
                 remote_run_id = client.submit_problem(submission.problem_id, submission.language,
                                                       submission.source_code)
@@ -92,7 +92,7 @@ class VJudge(threading.Thread):
         client = self._get_oj_client(oj_name)
         while True:
             run_id = queue.get()
-            submission = db.session.query(Submission).filter_by(run_id=run_id).one()
+            submission = Submission.query.filter_by(run_id=run_id).one()
             try:
                 verdict, exe_time, exe_mem = client.get_submit_status(submission.remote_run_id,
                                                                       user_id=submission.remote_user_id,
@@ -106,7 +106,7 @@ class VJudge(threading.Thread):
                 pass
 
     def refresh_status_all(self):
-        submissions = db.session.query(Submission).filter(Submission.verdict == 'Being Judged').filter(
+        submissions = Submission.query.filter(Submission.verdict == 'Being Judged').filter(
             Submission.remote_run_id.isnot(None)).all()
         for submission in submissions:
             if submission.oj_name in self.available_ojs:
@@ -115,7 +115,7 @@ class VJudge(threading.Thread):
     def handle_requests(self):
         while True:
             run_id = self.queue.get()
-            submission = db.session.query(Submission).filter_by(run_id=run_id).one()
+            submission = Submission.query.filter_by(run_id=run_id).one()
             if submission.oj_name not in self.available_ojs:
                 submission.verdict = 'Submit Failed'
                 db.session.commit()

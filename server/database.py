@@ -8,8 +8,9 @@ class SQLManager(object):
     def __init__(self, app=None):
         engine = create_engine(SQLALCHEMY_DATABASE_URI)
         session_factory = sessionmaker(bind=engine)
-        self.Model = declarative_base(bind=engine)
         self._session = scoped_session(session_factory)
+        self.Model = declarative_base(bind=engine)
+        self.Model.query = self._session.query_property()
         if app is not None:
             self.init_app(app)
 
