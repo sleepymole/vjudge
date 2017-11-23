@@ -41,7 +41,7 @@ class BaseClient(metaclass=ABCMeta):
 
 class VJudge(threading.Thread):
     def __init__(self, queue):
-        threading.Thread.__init__(self)
+        super().__init__()
         self.queue = queue
         self.judge_queues = {}
         self.status_queues = {}

@@ -31,6 +31,7 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{current_user.username}}<b
                             class="caret"></b></a>
                     <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('main.user', username=current_user.username) }}">Profile</a></li>
                         <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
                         <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
                     </ul>
@@ -55,4 +56,9 @@
 
     {% block page_content %}{% endblock %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ moment.include_moment() }}
 {% endblock %}

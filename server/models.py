@@ -1,17 +1,40 @@
+import sqlalchemy as sql
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 from flask import current_app
+from datetime import datetime
 from . import db, login_manager
+
+
+class Permission:
+    FOLLOW = 0x01
+    ADMINISTER = 0x80
 
 
 class Role(db.Model):
     __tablename__ = 'roles'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(64), unique=True)
+    id = sql.Column(sql.Integer, primary_key=True)
+    name = sql.Column(sql.String(64), unique=True)
+    default = sql.Column(sql.Boolean, default=False, index=True)
+    permissions = sql.Column(sql.Integer)
     users = relationship('User', backref='role', lazy='dynamic')
+
+    @staticmethod
+    def insert_roles():
+        roles = {
+            'User': (Permission.FOLLOW, True),
+            'Administrator': (0xff, False)
+        }
+        for r in roles:
+            role = Role.query.filter_by(name=r).first()
+            if role is None:
+                role = Role(name=r)
+            role.permissions = roles[r][0]
+            role.default = roles[r][1]
+            db.session.add(role)
+        db.session.commit()
 
     def __repr__(self):
         return '<Role {}>'.format(self.name)
@@ -19,10 +42,20 @@ class Role(db.Model):
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    username = Column(String(64), unique=True, index=True)
-    role_id = Column(Integer, ForeignKey('roles.id'))
-    password_hash = Column(String(128))
+    id = sql.Column(sql.Integer, primary_key=True)
+    username = sql.Column(sql.String(64), unique=True, index=True)
+    role_id = sql.Column(sql.Integer, sql.ForeignKey('roles.id'))
+    password_hash = sql.Column(sql.String(128))
+    name = sql.Column(sql.String(64))
+    location = sql.Column(sql.String(64))
+    about_me = sql.Column(sql.Text)
+    member_since = sql.Column(sql.DateTime, default=datetime.utcnow)
+    last_seen = sql.Column(sql.DateTime, default=datetime.utcnow)
+
+    def __init__(self):
+        super().__init__()
+        if self.role is None:
+            self.role = Role.query.filter_by(default=True).first()
 
     @property
     def password(self):
@@ -51,24 +84,43 @@ class User(UserMixin, db.Model):
         db.session.add(self)
         return True
 
+    def can(self, permissions):
+        return self.role is not None and \
+               (self.role.permissions & permissions) == permissions
+
+    def is_administrator(self):
+        return self.can(Permission.ADMINISTER)
+
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
 
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, permissions):
+        return False
+
+    def is_administrator(self):
+        return False
+
+
 class Submission(db.Model):
     __tablename__ = 'submission'
-    run_id = Column(Integer, primary_key=True)
-    user_id = Column(String)
-    oj_name = Column(String, nullable=False)
-    problem_id = Column(String, nullable=False)
-    language = Column(String, nullable=False)
-    source_code = Column(String)
-    submit_time = Column(Integer, nullable=False)
-    remote_run_id = Column(String)
-    remote_user_id = Column(String)
-    verdict = Column(String, default='Queuing')
-    exe_time = Column(Integer)
-    exe_mem = Column(Integer)
+    run_id = sql.Column(sql.Integer, primary_key=True)
+    user_id = sql.Column(sql.String)
+    oj_name = sql.Column(sql.String, nullable=False)
+    problem_id = sql.Column(sql.String, nullable=False)
+    language = sql.Column(sql.String, nullable=False)
+    source_code = sql.Column(sql.String)
+    submit_time = sql.Column(sql.Integer, nullable=False)
+    remote_run_id = sql.Column(sql.String)
+    remote_user_id = sql.Column(sql.String)
+    verdict = sql.Column(sql.String, default='Queuing')
+    exe_time = sql.Column(sql.Integer)
+    exe_mem = sql.Column(sql.Integer)
 
     def update(self, **kwargs):
         for attr in kwargs:
