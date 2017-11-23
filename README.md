@@ -1,1 +1,1 @@
-## SCU Virtual Judge Core
+## SCU Virtual Judge
