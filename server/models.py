@@ -1,7 +1,7 @@
 import sqlalchemy as sql
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from flask_login import UserMixin, AnonymousUserMixin
 from flask import current_app
 from datetime import datetime
@@ -40,6 +40,13 @@ class Role(db.Model):
         return '<Role {}>'.format(self.name)
 
 
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = sql.Column(sql.Integer, sql.ForeignKey('users.id'), primary_key=True)
+    followed_id = sql.Column(sql.Integer, sql.ForeignKey('users.id'), primary_key=True)
+    timestamp = sql.Column(sql.DateTime, default=datetime.utcnow)
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = sql.Column(sql.Integer, primary_key=True)
@@ -52,6 +59,16 @@ class User(UserMixin, db.Model):
     about_me = sql.Column(sql.Text)
     member_since = sql.Column(sql.DateTime, default=datetime.utcnow)
     last_seen = sql.Column(sql.DateTime, default=datetime.utcnow)
+    followed = relationship('Follow',
+                            foreign_keys=[Follow.follower_id],
+                            backref=backref('follower', lazy='joined'),
+                            lazy='dynamic',
+                            cascade='all, delete-orphan')
+    followers = relationship('Follow',
+                             foreign_keys=[Follow.followed_id],
+                             backref=backref('followed', lazy='joined'),
+                             lazy='dynamic',
+                             cascade='all, delete-orphan')
 
     def __init__(self):
         super().__init__()
@@ -96,6 +113,22 @@ class User(UserMixin, db.Model):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
 
+    def follow(self, user):
+        if not self.is_following(user):
+            f = Follow(follower=self, followed=user)
+            db.session.add(f)
+
+    def unfollow(self, user):
+        f = self.followed.filter_by(followed_id=user.id).first()
+        if f:
+            db.session.delete(f)
+
+    def is_following(self, user):
+        return self.followed.filter_by(followed_id=user.id).first() is not None
+
+    def is_followed_by(self, user):
+        return self.followers.filter_by(follower_id=user.id).first() is not None
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
@@ -106,6 +139,9 @@ class AnonymousUser(AnonymousUserMixin):
 
     def is_administrator(self):
         return False
+
+
+login_manager.anonymous_user = AnonymousUser
 
 
 class Submission(db.Model):
