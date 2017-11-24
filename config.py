@@ -64,6 +64,7 @@ def get_header():
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'A0Zr98j/3yX R~XHH!jmN]LWX/,?R'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    FLASKY_FOLLOWERS_PER_PAGE = 20
 
 
 class DevelopmentConfig(Config):

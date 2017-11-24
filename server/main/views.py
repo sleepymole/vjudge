@@ -1,5 +1,4 @@
-import time
-from flask import render_template, request, jsonify, flash, redirect, abort, url_for
+from flask import current_app, render_template, request, jsonify, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
 from config import AVAILABLE_OJS
 from .forms import EditProfileForm, EditProfileAdminForm
@@ -94,7 +93,7 @@ def unfollow(username):
     if user is None:
         flash('Invalid user.')
         return redirect(url_for('.index'))
-    if current_user.is_following(user):
+    if not current_user.is_following(user):
         flash('You are not following this user.')
         return redirect(url_for('.user', username=username))
     current_user.unfollow(user)
@@ -108,7 +107,12 @@ def followers(username):
     if user is None:
         flash('Invalid user.')
         return redirect(url_for('.index'))
-    return redirect(url_for('.user', username=username))
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
+    pagination = user.followers.paginate(page, per_page=per_page, error_out=False)
+    follows = [{'user': item.follower, 'timestamp': item.timestamp} for item in pagination.items]
+    return render_template('followers.html', user=user, title='Followers of',
+                           endpoint='.followers', pagination=pagination, follows=follows)
 
 
 @main.route('/followed-by/<username>')
@@ -117,7 +121,12 @@ def followed_by(username):
     if user is None:
         flash('Invalid user.')
         return redirect(url_for('.index'))
-    return redirect(url_for('.user', username=username))
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
+    pagination = user.followed.paginate(page, per_page=per_page, error_out=False)
+    follows = [{'user': item.follower, 'timestamp': item.timestamp} for item in pagination.items]
+    return render_template('followers.html', user=user, title='Followed by',
+                           endpoint='.followers', pagination=pagination, follows=follows)
 
 
 @main.route('/submit', methods=['POST'])
@@ -129,7 +138,7 @@ def submit():
     if None in (oj_name, problem_id, language, source_code) or oj_name not in AVAILABLE_OJS:
         return jsonify({'status': 'failed'})
     submission = Submission(oj_name=oj_name, problem_id=problem_id,
-                            language=language, source_code=source_code, submit_time=int(time.time()))
+                            language=language, source_code=source_code)
     db.session.add(submission)
     db.session.commit()
     run_id = submission.run_id

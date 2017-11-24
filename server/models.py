@@ -1,7 +1,7 @@
 import sqlalchemy as sql
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref
 from flask_login import UserMixin, AnonymousUserMixin
 from flask import current_app
 from datetime import datetime
@@ -19,7 +19,7 @@ class Role(db.Model):
     name = sql.Column(sql.String(64), unique=True)
     default = sql.Column(sql.Boolean, default=False, index=True)
     permissions = sql.Column(sql.Integer)
-    users = relationship('User', backref='role', lazy='dynamic')
+    users = db.relationship('User', backref='role', lazy='dynamic')
 
     @staticmethod
     def insert_roles():
@@ -59,16 +59,16 @@ class User(UserMixin, db.Model):
     about_me = sql.Column(sql.Text)
     member_since = sql.Column(sql.DateTime, default=datetime.utcnow)
     last_seen = sql.Column(sql.DateTime, default=datetime.utcnow)
-    followed = relationship('Follow',
-                            foreign_keys=[Follow.follower_id],
-                            backref=backref('follower', lazy='joined'),
-                            lazy='dynamic',
-                            cascade='all, delete-orphan')
-    followers = relationship('Follow',
-                             foreign_keys=[Follow.followed_id],
-                             backref=backref('followed', lazy='joined'),
-                             lazy='dynamic',
-                             cascade='all, delete-orphan')
+    followed = db.relationship('Follow',
+                               foreign_keys=[Follow.follower_id],
+                               backref=backref('follower', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+    followers = db.relationship('Follow',
+                                foreign_keys=[Follow.followed_id],
+                                backref=backref('followed', lazy='joined'),
+                                lazy='dynamic',
+                                cascade='all, delete-orphan')
 
     def __init__(self):
         super().__init__()
@@ -158,6 +158,7 @@ class Submission(db.Model):
     verdict = sql.Column(sql.String, default='Queuing')
     exe_time = sql.Column(sql.Integer)
     exe_mem = sql.Column(sql.Integer)
+    time_stamp = sql.Column(sql.DateTime, default=datetime.utcnow)
 
     def update(self, **kwargs):
         for attr in kwargs:
