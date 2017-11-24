@@ -43,6 +43,7 @@ class Role(db.Model):
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = sql.Column(sql.Integer, primary_key=True)
+    email = sql.Column(sql.String(64), unique=True, index=True)
     username = sql.Column(sql.String(64), unique=True, index=True)
     role_id = sql.Column(sql.Integer, sql.ForeignKey('roles.id'))
     password_hash = sql.Column(sql.String(128))

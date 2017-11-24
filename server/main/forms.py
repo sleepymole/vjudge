@@ -1,11 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, BooleanField, SelectField
-from wtforms.validators import DataRequired, Length, Regexp, ValidationError
+from wtforms import StringField, TextAreaField, SubmitField, SelectField
+from wtforms.validators import DataRequired, Length, Email, Regexp, ValidationError
 from ..models import User, Role
 
 
 class EditProfileForm(FlaskForm):
     name = StringField('Real name', validators=[Length(1, 64)])
+    email = StringField('Email', validators=[Email()])
     location = StringField('Location', validators=[Length(1, 64)])
     about_me = TextAreaField('About me')
     submit = SubmitField('Submit')
@@ -16,10 +17,10 @@ class EditProfileAdminForm(FlaskForm):
         DataRequired(), Length(1, 64), Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
                                               'Usernames must have only letters, '
                                               'numbers, dots or underscores')])
-    confirmed = BooleanField('Confirmed')
     role = SelectField('Role', coerce=int)
-    name = StringField('Real name', validators=[Length(0, 64)])
-    location = StringField('Location', validators=[Length(0, 64)])
+    name = StringField('Real name', validators=[Length(1, 64)])
+    email = StringField('Email', validators=[Email()])
+    location = StringField('Location', validators=[Length(1, 64)])
     about_me = TextAreaField('About me')
     submit = SubmitField('Submit')
 
