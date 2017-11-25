@@ -1,21 +1,17 @@
+from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from flask_moment import Moment
 from flask import Flask
-from queue import Queue
 from config import config
-from .database import SQLManager
 
 bootstrap = Bootstrap()
 moment = Moment()
+db = SQLAlchemy()
 
 login_manager = LoginManager()
 login_manager.session_protection = 'basic'
 login_manager.login_view = 'auth.login'
-
-db = SQLManager()
-
-submit_queue = Queue()
 
 
 def create_app(config_name):

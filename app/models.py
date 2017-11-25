@@ -144,32 +144,6 @@ class AnonymousUser(AnonymousUserMixin):
 login_manager.anonymous_user = AnonymousUser
 
 
-class Submission(db.Model):
-    __tablename__ = 'submission'
-    run_id = sql.Column(sql.Integer, primary_key=True)
-    user_id = sql.Column(sql.String)
-    oj_name = sql.Column(sql.String, nullable=False)
-    problem_id = sql.Column(sql.String, nullable=False)
-    language = sql.Column(sql.String, nullable=False)
-    source_code = sql.Column(sql.String)
-    submit_time = sql.Column(sql.Integer, nullable=False)
-    remote_run_id = sql.Column(sql.String)
-    remote_user_id = sql.Column(sql.String)
-    verdict = sql.Column(sql.String, default='Queuing')
-    exe_time = sql.Column(sql.Integer)
-    exe_mem = sql.Column(sql.Integer)
-    time_stamp = sql.Column(sql.DateTime, default=datetime.utcnow)
-
-    def update(self, **kwargs):
-        for attr in kwargs:
-            if hasattr(self, attr):
-                setattr(self, attr, kwargs.get(attr))
-
-    def __repr__(self):
-        return '<Submission(run_id={}, user_id={}, oj_name={}, problem_id={} verdict={})>'. \
-            format(self.run_id, self.user_id, self.oj_name, self.problem_id, self.verdict)
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

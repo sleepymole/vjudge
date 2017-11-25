@@ -1,9 +1,8 @@
-from flask import current_app, render_template, request, jsonify, flash, redirect, abort, url_for
+from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
-from config import AVAILABLE_OJS
 from .forms import EditProfileForm, EditProfileAdminForm
-from .. import db, submit_queue
-from ..models import User, Role, Permission, Submission
+from .. import db
+from ..models import User, Role, Permission
 from ..decorators import admin_required, permission_required
 from . import main
 
@@ -127,29 +126,3 @@ def followed_by(username):
     follows = [{'user': item.followed, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followers.html', user=user, title='Followed by',
                            endpoint='.followers', pagination=pagination, follows=follows)
-
-
-@main.route('/submit', methods=['POST'])
-def submit():
-    oj_name = request.form.get('oj_name')
-    problem_id = request.form.get('problem_id')
-    language = request.form.get('language')
-    source_code = request.form.get('source_code')
-    if None in (oj_name, problem_id, language, source_code) or oj_name not in AVAILABLE_OJS:
-        return jsonify({'status': 'failed'})
-    submission = Submission(oj_name=oj_name, problem_id=problem_id,
-                            language=language, source_code=source_code)
-    db.session.add(submission)
-    db.session.commit()
-    run_id = submission.run_id
-    submit_queue.put(run_id)
-    return jsonify({'status': 'success', 'run_id': run_id})
-
-
-@main.route('/status/<run_id>')
-def status(run_id):
-    result = db.session.query(Submission.verdict, Submission.exe_time, Submission.exe_mem). \
-        filter_by(run_id=run_id).one()
-    if result is None:
-        return jsonify({'status': 'failed'})
-    return jsonify({'status': 'success', 'result': list(result)})
