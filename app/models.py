@@ -147,3 +147,20 @@ login_manager.anonymous_user = AnonymousUser
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+class Problem(db.Model):
+    __tablename__ = 'problems'
+    oj_name = db.Column(db.String, primary_key=True)
+    problem_id = db.Column(db.String, primary_key=True)
+    last_update = db.Column(db.DateTime, nullable=False)
+    title = db.Column(db.String)
+    input = db.Column(db.String)
+    output = db.Column(db.String)
+    sample_input = db.Column(db.String)
+    sample_output = db.Column(db.Integer)
+    mem_limit = db.Column(db.Integer)
+    time_limit = db.Column(db.Integer)
+
+    def __repr__(self):
+        return '<Problem{} {}: {}>'.format(self.oj_name, self.problem_id, self.title)

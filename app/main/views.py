@@ -126,3 +126,8 @@ def followed_by(username):
     follows = [{'user': item.followed, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followers.html', user=user, title='Followed by',
                            endpoint='.followers', pagination=pagination, follows=follows)
+
+
+@main.route('/problem')
+def problem_list():
+    return render_template('problem_list.html')
