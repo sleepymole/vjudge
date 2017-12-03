@@ -141,7 +141,7 @@ def problem(oj_name, problem_id=None):
 
 @main.route('/problem')
 def problem_list():
-    oj_name = request.args.get('oj_name', None)
+    oj_name = request.args.get('oj', None)
     problem_id = request.args.get('problem_id', None)
     page = request.args.get('page', 1, type=int)
     per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
@@ -152,4 +152,4 @@ def problem_list():
     problems = [{'oj_name': item.oj_name, 'problem_id': item.problem_id, 'title': item.title,
                  'last_update': item.last_update} for item in pagination.items]
     return render_template('problem_list.html', problems=problems, endpoint='.problem_list',
-                           pagination=pagination, oj_name=oj_name)
+                           pagination=pagination, oj=oj_name)

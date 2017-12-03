@@ -30,8 +30,8 @@
         {% endfor %}
     </table>
     <div class="pagination">
-        {% if oj_name %}
-            {{ macros.pagination_widget(pagination, endpoint,oj_name=oj_name) }}
+        {% if oj %}
+            {{ macros.pagination_widget(pagination, endpoint,oj=oj_name) }}
         {% else %}
             {{ macros.pagination_widget(pagination, endpoint) }}
         {% endif %}
