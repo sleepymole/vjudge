@@ -133,8 +133,10 @@ def followed_by(username):
 def problem(oj_name, problem_id=None):
     if not problem_id:
         return redirect(url_for('.problem_list', oj_name=oj_name))
-    print(oj_name, problem_id)
-    return render_template('problem.html')
+    problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
+    if problem is None:
+        abort(404)
+    return render_template('problem.html', problem=problem)
 
 
 @main.route('/problem')
