@@ -1,8 +1,8 @@
 from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
+from sqlalchemy import and_
 from .forms import EditProfileForm, EditProfileAdminForm
-from .. import db
-from ..models import User, Role, Permission
+from ..models import db, User, Role, Permission, Problem
 from ..decorators import admin_required, permission_required
 from . import main
 
@@ -125,9 +125,29 @@ def followed_by(username):
     pagination = user.followed.paginate(page, per_page=per_page, error_out=False)
     follows = [{'user': item.followed, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followers.html', user=user, title='Followed by',
-                           endpoint='.followers', pagination=pagination, follows=follows)
+                           endpoint='.followed_by', pagination=pagination, follows=follows)
+
+
+@main.route('/problem/<oj_name>/')
+@main.route('/problem/<oj_name>/<problem_id>')
+def problem(oj_name, problem_id=None):
+    if not problem_id:
+        return redirect(url_for('.problem_list', oj_name=oj_name))
+    print(oj_name, problem_id)
+    return render_template('problem.html')
 
 
 @main.route('/problem')
 def problem_list():
-    return render_template('problem_list.html')
+    oj_name = request.args.get('oj_name', None)
+    problem_id = request.args.get('problem_id', None)
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
+    pagination = Problem.query.filter(
+        and_(Problem.oj_name.like(oj_name or '%'),
+             Problem.problem_id.like(problem_id or '%'))). \
+        paginate(page, per_page=per_page, error_out=False)
+    problems = [{'oj_name': item.oj_name, 'problem_id': item.problem_id, 'title': item.title,
+                 'last_update': item.last_update} for item in pagination.items]
+    return render_template('problem_list.html', problems=problems, endpoint='.problem_list',
+                           pagination=pagination, oj_name=oj_name)

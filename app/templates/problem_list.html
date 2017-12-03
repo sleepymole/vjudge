@@ -1,7 +1,39 @@
 {% extends "base.html" %}
-{% block title %}VJudge{% endblock %}
+{% import "_macros.html" as macros %}
+{% block title %}VJudge - Problem list{% endblock %}
 {% block page_content %}
-<div class="page-header">
-    <h1>Hello, {% if current_user.is_authenticated %}{{ current_user.username }}{% else %}Stranger{% endif %}!</h1>
-</div>
+    <div class="page-header">
+        <h1>Problem list</h1>
+    </div>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>OJ</th>
+            <th>Problem</th>
+            <th>Title</th>
+            <th>Last update</th>
+        </tr>
+        </thead>
+        {% for problem in problems %}
+            <tr>
+                <td>{{ problem.oj_name }}</td>
+                <td>
+                    <a href="{{ url_for('.problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}">
+                        {{ problem.problem_id }}</a>
+                </td>
+                <td>
+                    <a href="{{ url_for('.problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}">
+                        {{ problem.title }}</a>
+                </td>
+                <td>{{ moment(problem.last_update).format('L') }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <div class="pagination">
+        {% if oj_name %}
+            {{ macros.pagination_widget(pagination, endpoint,oj_name=oj_name) }}
+        {% else %}
+            {{ macros.pagination_widget(pagination, endpoint) }}
+        {% endif %}
+    </div>
 {% endblock %}

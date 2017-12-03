@@ -163,4 +163,4 @@ class Problem(db.Model):
     time_limit = db.Column(db.Integer)
 
     def __repr__(self):
-        return '<Problem{} {}: {}>'.format(self.oj_name, self.problem_id, self.title)
+        return '<Problem {} {}: {}>'.format(self.oj_name, self.problem_id, self.title)
