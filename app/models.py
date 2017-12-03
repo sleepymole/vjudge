@@ -155,6 +155,7 @@ class Problem(db.Model):
     problem_id = db.Column(db.String, primary_key=True)
     last_update = db.Column(db.DateTime, nullable=False)
     title = db.Column(db.String)
+    description = db.Column(db.String)
     input = db.Column(db.String)
     output = db.Column(db.String)
     sample_input = db.Column(db.String)

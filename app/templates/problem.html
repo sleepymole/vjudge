@@ -4,4 +4,35 @@
     <div class="page-header">
         <h1>{{ problem.title }}</h1>
     </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Description</div>
+        <div class="panel-body">
+            {{ problem.description }}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Input</div>
+        <div class="panel-body">
+            {{ problem.input }}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Output</div>
+        <div class="panel-body">
+            {{ problem.output }}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Sample input</div>
+        <div class="panel-body">
+            {{ problem.sample_input }}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">Sample output</div>
+        <div class="panel-body">
+            {{ problem.sample_output }}
+        </div>
+    </div>
+
 {% endblock %}
