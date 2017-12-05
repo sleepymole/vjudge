@@ -1,0 +1,19 @@
+.profile-thumbnail {
+    position: absolute;
+}
+
+.profile-header {
+    min-height: 260px;
+    margin-left: 280px;
+}
+
+div.pagination {
+    width: 100%;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+}
+
+.table.followers tr {
+    border-bottom: 1px solid #e0e0e0;
+}

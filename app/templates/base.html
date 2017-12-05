@@ -1,5 +1,13 @@
 {% extends "bootstrap/base.html" %}
 {% block title %}VJduge{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+{% endblock %}
+
 {% block navbar %}
 <div class="navbar navbar-inverse" role="navigation">
     <div class="container">
@@ -62,5 +70,5 @@
 
 {% block scripts %}
 {{ super() }}
-{{ moment.include_moment() }}
+{{ moment.include_moment(local_js=url_for('static',filename='moment/moment-with-locales.min.js')) }}
 {% endblock %}

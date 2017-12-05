@@ -7,6 +7,7 @@ class Config(object):
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     FLASKY_FOLLOWERS_PER_PAGE = 20
+    BOOTSTRAP_SERVE_LOCAL = True
 
 
 class DevelopmentConfig(Config):

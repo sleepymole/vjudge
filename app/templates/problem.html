@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% block title %}VJudge - {{ problem.oj_name.upper() }}-{{ problem.problem_id }}{% endblock %}
 {% block page_content %}
+
+
 <div class="page-header">
     <h1>{{ problem.title }}</h1>
 </div>
 <div class="panel panel-default">
-    <div class="panel-heading">Description</div>
+    <div class="panel-heading"><b>Description</b></div>
     <div class="panel-body">
         {% autoescape false %}
         {{ problem.description }}
@@ -13,7 +15,7 @@
     </div>
 </div>
 <div class="panel panel-default">
-    <div class="panel-heading">Input</div>
+    <div class="panel-heading"><b>Input</b></div>
     <div class="panel-body">
         {% autoescape false %}
         {{ problem.input }}
@@ -21,7 +23,7 @@
     </div>
 </div>
 <div class="panel panel-default">
-    <div class="panel-heading">Output</div>
+    <div class="panel-heading"><b>Output</b></div>
     <div class="panel-body">
         {% autoescape false %}
         {{ problem.output }}
@@ -29,7 +31,7 @@
     </div>
 </div>
 <div class="panel panel-default">
-    <div class="panel-heading">Sample input</div>
+    <div class="panel-heading"><b>Sample input</b></div>
     <div class="panel-body">
         {% autoescape false %}
         {{ problem.sample_input }}
@@ -37,7 +39,7 @@
     </div>
 </div>
 <div class="panel panel-default">
-    <div class="panel-heading">Sample output</div>
+    <div class="panel-heading"><b>Sample output</b></div>
     <div class="panel-body">
         {% autoescape false %}
         {{ problem.sample_output }}
@@ -45,9 +47,9 @@
     </div>
 </div>
 
+
 {% endblock %}
 {% block scripts %}
 {{ super() }}
-<script type="text/javascript"
-        src="http://acm.hdu.edu.cn/js/MathJax/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/javascript" src="http://acm.hdu.edu.cn/js/MathJax/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 {% endblock %}
