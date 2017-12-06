@@ -9,6 +9,7 @@ from . import db, login_manager
 
 class Permission:
     FOLLOW = 0x01
+    MODERATE = 0x40
     ADMINISTER = 0x80
 
 
@@ -24,6 +25,8 @@ class Role(db.Model):
     def insert_roles():
         roles = {
             'User': (Permission.FOLLOW, True),
+            'Moderator': (Permission.FOLLOW |
+                          Permission.MODERATE, False),
             'Administrator': (0xff, False)
         }
         for r in roles:

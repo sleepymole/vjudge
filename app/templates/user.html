@@ -15,7 +15,7 @@
             {% endif %}
         </p>
         {% endif %}
-        {% if current_user.is_administrator() and user.email %}
+        {% if current_user.can(Permission.MODERATE) and user.email %}
         <p><a href="mailto:{{ user.email }}">{{ user.email }}</a></p>
         {% endif %}
         {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
