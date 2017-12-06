@@ -1,55 +1,70 @@
 {% extends "base.html" %}
 {% block title %}VJudge - {{ problem.oj_name.upper() }}-{{ problem.problem_id }}{% endblock %}
 {% block page_content %}
-
-
 <div class="page-header">
     <h1>{{ problem.title }}</h1>
 </div>
-<div class="panel panel-default">
-    <div class="panel-heading"><b>Description</b></div>
-    <div class="panel-body">
-        {% autoescape false %}
-        {{ problem.description }}
-        {% endautoescape %}
+<div class="row">
+    <div class=" col-md-9 col-sm-12">
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Description</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.description }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Input</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.input }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Output</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.output }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Sample input</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.sample_input }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Sample output</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.sample_output }}
+                {% endautoescape %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 hidden-sm">
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Recent News</b></div>
+            <div class="panel-body">XYZ</div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Top Rated</b></div>
+            <div class="panel-body">XYZ</div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Recent news</b></div>
+            <div class="panel-body">XYZ</div>
+        </div>
     </div>
 </div>
-<div class="panel panel-default">
-    <div class="panel-heading"><b>Input</b></div>
-    <div class="panel-body">
-        {% autoescape false %}
-        {{ problem.input }}
-        {% endautoescape %}
-    </div>
-</div>
-<div class="panel panel-default">
-    <div class="panel-heading"><b>Output</b></div>
-    <div class="panel-body">
-        {% autoescape false %}
-        {{ problem.output }}
-        {% endautoescape %}
-    </div>
-</div>
-<div class="panel panel-default">
-    <div class="panel-heading"><b>Sample input</b></div>
-    <div class="panel-body">
-        {% autoescape false %}
-        {{ problem.sample_input }}
-        {% endautoescape %}
-    </div>
-</div>
-<div class="panel panel-default">
-    <div class="panel-heading"><b>Sample output</b></div>
-    <div class="panel-body">
-        {% autoescape false %}
-        {{ problem.sample_output }}
-        {% endautoescape %}
-    </div>
-</div>
-
-
 {% endblock %}
 {% block scripts %}
 {{ super() }}
-<script type="text/javascript" src="http://acm.hdu.edu.cn/js/MathJax/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/javascript"
+        src="http://acm.hdu.edu.cn/js/MathJax/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 {% endblock %}

@@ -1,4 +1,3 @@
-import sqlalchemy as sql
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from sqlalchemy.orm import backref
@@ -15,10 +14,10 @@ class Permission:
 
 class Role(db.Model):
     __tablename__ = 'roles'
-    id = sql.Column(sql.Integer, primary_key=True)
-    name = sql.Column(sql.String(64), unique=True)
-    default = sql.Column(sql.Boolean, default=False, index=True)
-    permissions = sql.Column(sql.Integer)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    default = db.Column(db.Boolean, default=False, index=True)
+    permissions = db.Column(db.Integer)
     users = db.relationship('User', backref='role', lazy='dynamic')
 
     @staticmethod
@@ -42,23 +41,23 @@ class Role(db.Model):
 
 class Follow(db.Model):
     __tablename__ = 'follows'
-    follower_id = sql.Column(sql.Integer, sql.ForeignKey('users.id'), primary_key=True)
-    followed_id = sql.Column(sql.Integer, sql.ForeignKey('users.id'), primary_key=True)
-    timestamp = sql.Column(sql.DateTime, default=datetime.utcnow)
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-    id = sql.Column(sql.Integer, primary_key=True)
-    email = sql.Column(sql.String(64), unique=True, index=True)
-    username = sql.Column(sql.String(64), unique=True, index=True)
-    role_id = sql.Column(sql.Integer, sql.ForeignKey('roles.id'))
-    password_hash = sql.Column(sql.String(128))
-    name = sql.Column(sql.String(64))
-    location = sql.Column(sql.String(64))
-    about_me = sql.Column(sql.Text)
-    member_since = sql.Column(sql.DateTime, default=datetime.utcnow)
-    last_seen = sql.Column(sql.DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(64), unique=True, index=True)
+    username = db.Column(db.String(64), unique=True, index=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    password_hash = db.Column(db.String(128))
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text)
+    member_since = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     followed = db.relationship('Follow',
                                foreign_keys=[Follow.follower_id],
                                backref=backref('follower', lazy='joined'),
@@ -165,3 +164,22 @@ class Problem(db.Model):
 
     def __repr__(self):
         return '<Problem {} {}: {}>'.format(self.oj_name, self.problem_id, self.title)
+
+
+class Submission(db.Model):
+    __tablename__ = 'submissions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, index=True)
+    oj_name = db.Column(db.String, nullable=False)
+    problem_id = db.Column(db.String, nullable=False)
+    language = db.Column(db.String, nullable=False)
+    source_code = db.Column(db.String, nullable=False)
+    run_id = db.Column(db.String)
+    verdict = db.Column(db.String)
+    exe_time = db.Column(db.Integer)
+    exe_mem = db.Column(db.Integer)
+    time_stamp = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<Submission(id={}, user_id={}, oj_name={}, problem_id={} verdict={})>'. \
+            format(self.run_id, self.user_id, self.oj_name, self.problem_id, self.verdict)

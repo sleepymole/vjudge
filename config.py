@@ -6,8 +6,9 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.dirname(__file__) + '/data.sqlite'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    FLASKY_FOLLOWERS_PER_PAGE = 20
     BOOTSTRAP_SERVE_LOCAL = True
+    FLASKY_ADMIN = 'admin'
+    FLASKY_FOLLOWERS_PER_PAGE = 20
 
 
 class DevelopmentConfig(Config):

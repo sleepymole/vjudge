@@ -5,7 +5,11 @@
 
 {% block page_content %}
 <div class="page-header">
+    {% if current_user!=user %}
+    <h1>Edit Profile</h1>
+    {% else %}
     <h1>Edit Your Profile</h1>
+    {% endif %}
 </div>
 <div class="col-md-4">
     {{ wtf.quick_form(form) }}

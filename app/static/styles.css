@@ -1,3 +1,7 @@
+body {
+    background: snow;
+}
+
 .profile-thumbnail {
     position: absolute;
 }

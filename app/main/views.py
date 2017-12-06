@@ -20,7 +20,7 @@ def user(username):
     return render_template('user.html', user=user)
 
 
-@main.route('/edit_profile', methods=['GET', 'POST'])
+@main.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
     form = EditProfileForm()
@@ -32,15 +32,15 @@ def edit_profile():
         db.session.add(current_user)
         flash('Your profile has been updated.')
         return redirect(url_for('.user', username=current_user.username))
+    form.username.data = current_user.username
     form.name.data = current_user.name
     form.email.data = current_user.email
     form.location.data = current_user.location
     form.about_me.data = current_user.about_me
-    return render_template('edit_profile.html', form=form)
+    return render_template('edit_profile.html', form=form, user=current_user)
 
 
 @main.route('/edit-profile/<int:id>', methods=['GET', 'POST'])
-@login_required
 @admin_required
 def edit_profile_admin(id):
     user = User.query.get(id)
@@ -63,6 +63,7 @@ def edit_profile_admin(id):
     form.email.data = user.email
     form.location.data = user.location
     form.about_me.data = user.about_me
+    return render_template('edit_profile.html', form=form, user=user)
 
 
 @main.route('/follow/<username>')
