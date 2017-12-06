@@ -133,7 +133,7 @@ def followed_by(username):
 @main.route('/problem/<oj_name>/<problem_id>')
 def problem(oj_name, problem_id=None):
     if not problem_id:
-        return redirect(url_for('.problem_list', oj_name=oj_name))
+        return redirect(url_for('.problem_list', oj=oj_name))
     problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
     if problem is None:
         abort(404)
@@ -154,3 +154,12 @@ def problem_list():
                  'last_update': item.last_update} for item in pagination.items]
     return render_template('problem_list.html', problems=problems, endpoint='.problem_list',
                            pagination=pagination, oj=oj_name)
+
+
+@main.route('/edit-problem/<oj_name>/<problem_id>')
+@permission_required(Permission.MODERATE)
+def edit_problem(oj_name, problem_id):
+    problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
+    if not problem:
+        abort(404)
+    return render_template('edit_problem.html')

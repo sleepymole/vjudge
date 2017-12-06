@@ -26,3 +26,7 @@ class EditProfileAdminForm(FlaskForm):
         super().__init__(*args, **kwargs)
         self.role.choices = [(role.id, role.name)
                              for role in Role.query.order_by(Role.name).all()]
+
+
+class EditProblemForm(FlaskForm):
+    pass
