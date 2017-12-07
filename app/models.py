@@ -1,6 +1,5 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from sqlalchemy.orm import backref
 from flask_login import UserMixin, AnonymousUserMixin
 from flask import current_app
 from datetime import datetime
@@ -49,6 +48,27 @@ class Follow(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class Submission(db.Model):
+    __tablename__ = 'submissions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    oj_name = db.Column(db.String, nullable=False)
+    problem_id = db.Column(db.String, nullable=False)
+    language = db.Column(db.String, nullable=False)
+    source_code = db.Column(db.String, nullable=False)
+    run_id = db.Column(db.String)
+    verdict = db.Column(db.String)
+    exe_time = db.Column(db.Integer)
+    exe_mem = db.Column(db.Integer)
+    time_stamp = db.Column(db.DateTime)
+    __table_args__ = (db.ForeignKeyConstraint(
+        ['oj_name', 'problem_id'], ['problems.oj_name', 'problems.problem_id']), {})
+
+    def __repr__(self):
+        return '<Submission(id={}, user_id={}, oj_name={}, problem_id={} verdict={})>'. \
+            format(self.run_id, self.user_id, self.oj_name, self.problem_id, self.verdict)
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -63,14 +83,18 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     followed = db.relationship('Follow',
                                foreign_keys=[Follow.follower_id],
-                               backref=backref('follower', lazy='joined'),
+                               backref=db.backref('follower', lazy='joined'),
                                lazy='dynamic',
                                cascade='all, delete-orphan')
     followers = db.relationship('Follow',
                                 foreign_keys=[Follow.followed_id],
-                                backref=backref('followed', lazy='joined'),
+                                backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
+    submissions = db.relationship('Submission',
+                                  foreign_keys=[Submission.user_id],
+                                  backref='user',
+                                  lazy='dynamic')
 
     def __init__(self):
         super().__init__()
@@ -164,25 +188,8 @@ class Problem(db.Model):
     sample_output = db.Column(db.Integer)
     mem_limit = db.Column(db.Integer)
     time_limit = db.Column(db.Integer)
+    submissions = db.relationship('Submission', foreign_keys=[Submission.oj_name, Submission.problem_id],
+                                  backref='problem', lazy='dynamic')
 
     def __repr__(self):
         return '<Problem {} {}: {}>'.format(self.oj_name, self.problem_id, self.title)
-
-
-class Submission(db.Model):
-    __tablename__ = 'submissions'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String, index=True)
-    oj_name = db.Column(db.String, nullable=False)
-    problem_id = db.Column(db.String, nullable=False)
-    language = db.Column(db.String, nullable=False)
-    source_code = db.Column(db.String, nullable=False)
-    run_id = db.Column(db.String)
-    verdict = db.Column(db.String)
-    exe_time = db.Column(db.Integer)
-    exe_mem = db.Column(db.Integer)
-    time_stamp = db.Column(db.DateTime)
-
-    def __repr__(self):
-        return '<Submission(id={}, user_id={}, oj_name={}, problem_id={} verdict={})>'. \
-            format(self.run_id, self.user_id, self.oj_name, self.problem_id, self.verdict)

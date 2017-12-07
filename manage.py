@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 from app import create_app, db
-from app.models import User, Role, Problem
+from app.models import User, Role, Problem, Submission
 from flask_script import Manager, Shell
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
@@ -9,7 +9,7 @@ manager = Manager(app)
 
 
 def make_shell_context():
-    return dict(app=app, db=db, User=User, Role=Role, Problem=Problem)
+    return dict(app=app, db=db, User=User, Role=Role, Problem=Problem, Submission=Submission)
 
 
 manager.add_command('shell', Shell(make_context=make_shell_context))
