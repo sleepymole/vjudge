@@ -180,6 +180,7 @@ class Problem(db.Model):
     oj_name = db.Column(db.String, primary_key=True)
     problem_id = db.Column(db.String, primary_key=True)
     last_update = db.Column(db.DateTime, nullable=False)
+    solved = db.Column(db.Integer, default=0)
     title = db.Column(db.String)
     description = db.Column(db.String)
     input = db.Column(db.String)
