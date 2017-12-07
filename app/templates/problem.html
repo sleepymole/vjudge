@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% block title %}VJudge - {{ problem.oj_name.upper() }}-{{ problem.problem_id }}{% endblock %}
+
 {% block page_content %}
 <div class="page-header">
     <h1>{{ problem.title }}</h1>
 </div>
 <div class="row">
-    <div class=" col-md-9 col-sm-12">
+    <div class=" col-md-9 col-sm-12 col-xs-12">
         <div class="panel panel-default">
             <div class="panel-heading"><b>Description</b></div>
             <div class="panel-body">
@@ -46,8 +47,23 @@
                 {% endautoescape %}
             </div>
         </div>
+        <form id="submit_form" method="post" action="{{url_for('main.submit')}}" onsubmit="submitEncode()">
+            {{ form.hidden_tag() }}
+            <div class="panel panel-default">
+                <div id="editor"></div>
+            </div>
+            <div class="row problem-submit">
+                <div class="col-md-5 col-sm-5 col-xs-8">
+                    <input type="file" class="filestyle" data-text="Or choose file" data-buttonBefore="true"
+                           data-btnClass="btn-primary btn-info">
+                </div>
+                <div class="col-md-7 col-sm-7 col-xs-4">
+                    <button type="submit" class="btn btn-info pull-right">Submit</button>
+                </div>
+            </div>
+        </form>
     </div>
-    <div class="col-md-3 hidden-sm">
+    <div class="col-md-3 hidden-xs hidden-sm">
         <div class="panel panel-default">
             <div class="panel-heading"><b>Recent News</b></div>
             <div class="panel-body">XYZ</div>
@@ -65,6 +81,31 @@
 {% endblock %}
 {% block scripts %}
 {{ super() }}
-<script type="text/javascript"
-        src="http://acm.hdu.edu.cn/js/MathJax/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<script src="https://cdn.bootcss.com/ace/1.2.9/ace.js"></script>
+<script src="https://cdn.bootcss.com/ace/1.2.9/ext-language_tools.js"></script>
+<script src="https://cdn.bootcss.com/ace/1.2.9/theme-chrome.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='filestyle/bootstrap-filestyle.min.js') }}"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.session.setMode("ace/mode/c_cpp");
+    editor.setTheme("ace/theme/chrome");
+    editor.setAutoScrollEditorIntoView(true);
+    document.getElementById('editor').style.fontSize = '14px';
+    $(document).ready(function () {
+        $('select').material_select();
+    });
+
+    function submitEncode() {
+        var form = document.getElementById('submit_form');
+        form.source_code.value = editor.getValue();
+    }
+</script>
 {% endblock %}

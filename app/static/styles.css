@@ -2,6 +2,19 @@ body {
     background: snow;
 }
 
+#editor {
+    position: relative;
+    border: 1px solid lightgray;
+    margin: auto;
+    height: 0;
+    padding-bottom: 40%;
+}
+
+.problem-submit {
+    margin-top: -5px;
+    margin-bottom: 20px;
+}
+
 .profile-thumbnail {
     position: absolute;
 }

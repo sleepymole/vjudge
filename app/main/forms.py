@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, SelectField
+from wtforms import StringField, TextAreaField, SubmitField, SelectField, HiddenField, FileField
 from wtforms.validators import Length, Email
 from ..models import Role
 
@@ -30,3 +30,11 @@ class EditProfileAdminForm(FlaskForm):
 
 class EditProblemForm(FlaskForm):
     pass
+
+
+class SubmitProblemForm(FlaskForm):
+    oj_name = HiddenField('OJ')
+    problem_id = HiddenField('Problem')
+    language = StringField('Language')
+    source_code = HiddenField('Source code')
+    file = FileField('File')

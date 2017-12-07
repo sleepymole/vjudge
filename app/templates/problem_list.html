@@ -29,7 +29,8 @@
             <a href="{{ url_for('.problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}">
                 {{ problem.title }}</a>&nbsp;
             {% if current_user.can(Permission.MODERATE) %}
-            <span class="glyphicon glyphicon-refresh"></span>
+            <span class="glyphicon glyphicon-refresh problem-refresh"
+                  id="{{ problem.oj_name }}-{{ problem.problem_id }}"></span>
             {% endif %}
         </td>
         <td>0</td>
@@ -52,4 +53,16 @@
     {{ macros.pagination_widget(pagination, endpoint) }}
     {% endif %}
 </div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function () {
+        $(".problem-refresh").click(function () {
+            var prob = $(this).attr('id').split('-');
+            var url = 'refresh-problem/' + prob[0] + '/' + prob[1];
+            $.post(url);
+        });
+    });
+</script>
 {% endblock %}

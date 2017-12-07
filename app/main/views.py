@@ -1,7 +1,7 @@
 from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import and_
-from .forms import EditProfileForm, EditProfileAdminForm
+from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm
 from ..models import db, User, Role, Permission, Problem
 from ..decorators import admin_required, permission_required
 from . import main
@@ -46,7 +46,7 @@ def edit_profile_admin(id):
     user = User.query.get(id)
     if user is None:
         abort(404)
-    form = EditProfileAdminForm(user=user)
+    form = EditProfileAdminForm()
     if form.validate_on_submit():
         user.username = form.username.data
         user.role = Role.query.get(form.role.data)
@@ -137,7 +137,10 @@ def problem(oj_name, problem_id=None):
     problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
     if problem is None:
         abort(404)
-    return render_template('problem.html', problem=problem)
+    form = SubmitProblemForm()
+    form.oj_name.data = oj_name
+    form.problem_id.data = problem_id
+    return render_template('problem.html', problem=problem, form=form)
 
 
 @main.route('/problem')
@@ -163,3 +166,18 @@ def edit_problem(oj_name, problem_id):
     if not problem:
         abort(404)
     return render_template('edit_problem.html')
+
+
+@main.route('/refresh-problem/<oj_name>/<problem_id>', methods=['POST'])
+@permission_required(Permission.MODERATE)
+def refresh_problem(oj_name, problem_id):
+    return ''
+
+
+@main.route('/submit', methods=['POST'])
+@login_required
+def submit():
+    form = SubmitProblemForm()
+    if not form.validate_on_submit():
+        abort(403)
+    return redirect('http://127.0.0.1:5000/problem/hdu/6242')
