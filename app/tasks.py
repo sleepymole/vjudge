@@ -8,8 +8,8 @@ from datetime import datetime, timedelta
 base_url = Config.VJUDGE_REMOTE_URL
 
 
-@celery.task()
-def submit_problem(id):
+@celery.task(bind=True)
+def submit_problem(self, id):
     submission = Submission.query.get(int(id))
     url = base_url + '/problems/'
     s = requests.session()
@@ -19,7 +19,13 @@ def submit_problem(id):
         'language': submission.language,
         'source_code': submission.source_code
     }
-    r = s.post(url, data)
+    try:
+        r = s.post(url, data)
+    except requests.exceptions.RequestException as exc:
+        if self.request.retries == self.max_retries:
+            submission.verdict = 'Submit Failed'
+            db.session.commit()
+        raise self.retry(exc=exc, countdown=5)
     if 'id' in r.json():
         submission.run_id = r.json()['id']
         refresh_submit_status.delay(id)
