@@ -37,10 +37,8 @@
         <td>{{ moment(problem.last_update).format('L') }}</td>
         {% if current_user.can(Permission.MODERATE) %}
         <th>
-            <button type="button" class="btn btn-default">
-                <a style="color: black"
-                   href="{{ url_for('.edit_problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}">Edit</a>
-            </button>
+            <a href="{{ url_for('.edit_problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}"
+               class="btn btn-default">Edit</a>
         </th>
         {% endif %}
     </tr>

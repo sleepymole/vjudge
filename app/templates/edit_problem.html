@@ -4,5 +4,63 @@
 {% block title %}VJudge - Edit Problem{% endblock %}
 
 {% block page_content %}
+<div class="row">
+    <form id="submit_form" action="" method="post" onsubmit="getProblemData()">
+        <div class="col-md-8 col-sm-12 col-xs-12">
+            <div class="page-header">
+                <h1>Edit: {{ problem.title }}</h1>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading"><b>Description</b></div>
+                <div id="description-editor" class="ace-editor">{{ problem.description }}</div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading"><b>Input</b></div>
+                <div id="input-editor" class="ace-editor">{{ problem.input }}</div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading"><b>Output</b></div>
+                <div id="output-editor" class="ace-editor">{{ problem.output }}</div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading"><b>Sample input</b></div>
+                <div id="sample_input-editor" class="ace-editor">{{ sample_input }}</div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading"><b>Sample output</b></div>
+                <div id="sample_output-editor" class="ace-editor">{{ sample_output }}</div>
+            </div>
+            {{ form.hidden_tag() }}
+            <button type="submit" class="btn btn-primary problem-submit">Submit</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.bootcss.com/ace/1.2.9/ace.js"></script>
+<script src="https://cdn.bootcss.com/ace/1.2.9/ext-language_tools.js"></script>
+<script src="https://cdn.bootcss.com/ace/1.2.9/theme-chrome.js"></script>
+<script>
+    $(document).ready(function () {
+        $(".ace-editor").each(function () {
+            var editor = ace.edit(this);
+            editor.getSession().setMode('ace/mode/html');
+            editor.getSession().setUseWrapMode(true);
+            editor.setAutoScrollEditorIntoView(true);
+            editor.setFontSize(14);
+        });
+        ace.edit("sample_input-editor").getSession().setMode('ace/mode/text');
+        ace.edit("sample_output-editor").getSession().setMode('ace/mode/text');
+    });
 
+    function getProblemData() {
+        var form = document.getElementById('submit_form');
+        form.description.value = ace.edit("description-editor").getValue();
+        form.input.value = ace.edit("input-editor").getValue();
+        form.output.value = ace.edit("output-editor").getValue();
+        form.sample_input.value = ace.edit("sample_input-editor").getValue();
+        form.sample_output.value = ace.edit("sample_output-editor").getValue();
+    }
+</script>
 {% endblock %}

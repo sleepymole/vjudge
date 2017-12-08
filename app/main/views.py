@@ -1,11 +1,12 @@
 from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import and_
-from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm
+from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm, EditProblemForm
 from ..models import db, User, Role, Permission, Problem, Submission
 from ..decorators import admin_required, permission_required
 from . import main
 from .. import tasks
+from bs4 import BeautifulSoup
 
 
 @main.route('/')
@@ -160,13 +161,28 @@ def problem_list():
                            pagination=pagination, oj=oj_name)
 
 
-@main.route('/edit-problem/<oj_name>/<problem_id>')
+@main.route('/edit-problem/<oj_name>/<problem_id>', methods=['GET', 'POST'])
 @permission_required(Permission.MODERATE)
 def edit_problem(oj_name, problem_id):
     problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
     if not problem:
         abort(404)
-    return render_template('edit_problem.html')
+    form = EditProblemForm()
+    if form.validate_on_submit():
+        problem.description = form.description.data
+        problem.input = form.input.data
+        problem.output = form.output.data
+        problem.sample_input = '<pre>{}</pre>'.format(form.sample_input.data)
+        problem.sample_output = '<pre>{}</pre>'.format(form.sample_output.data)
+        db.session.add(problem)
+        flash('The problem has been updated.')
+        return redirect(url_for('.edit_problem', oj_name=oj_name, problem_id=problem_id))
+    print(list(request.form))
+    sample_input = BeautifulSoup(problem.sample_input, 'lxml').text
+    sample_output = BeautifulSoup(problem.sample_output, 'lxml').text
+
+    return render_template('edit_problem.html', problem=problem, sample_input=sample_input,
+                           sample_output=sample_output, form=form)
 
 
 @main.route('/refresh-problem/<oj_name>/<problem_id>', methods=['POST'])

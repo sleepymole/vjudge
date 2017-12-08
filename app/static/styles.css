@@ -10,6 +10,14 @@ body {
     padding-bottom: 40%;
 }
 
+.ace-editor {
+    position: relative;
+    border: 1px solid lightgray;
+    margin: auto;
+    height: 0;
+    padding-bottom: 40%;
+}
+
 .problem-submit {
     margin-top: -10px;
     margin-bottom: 20px;
@@ -21,7 +29,7 @@ body {
 }
 
 .problem-limit {
-    color:#419641;
+    color: #419641;
 }
 
 .profile-thumbnail {

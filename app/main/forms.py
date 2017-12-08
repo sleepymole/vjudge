@@ -29,7 +29,11 @@ class EditProfileAdminForm(FlaskForm):
 
 
 class EditProblemForm(FlaskForm):
-    pass
+    description = HiddenField('Description')
+    input = HiddenField('Input')
+    output = HiddenField('Output')
+    sample_input = HiddenField('Sample input')
+    sample_output = HiddenField('Sample output')
 
 
 class SubmitProblemForm(FlaskForm):
