@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, SelectField, HiddenField, FileField
+from wtforms import StringField, TextAreaField, SubmitField, SelectField, HiddenField, BooleanField
 from wtforms.validators import Length, Email
 from ..models import Role
 
@@ -35,6 +35,11 @@ class EditProblemForm(FlaskForm):
 class SubmitProblemForm(FlaskForm):
     oj_name = HiddenField('OJ')
     problem_id = HiddenField('Problem')
-    language = StringField('Language')
+    language = SelectField('Language')
     source_code = HiddenField('Source code')
-    file = FileField('File')
+    share = BooleanField('Share your code with others')
+    submit = SubmitField('Submit')
+
+    def __init__(self, language=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.language.choices = language or []

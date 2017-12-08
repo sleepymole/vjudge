@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}VJudge - {{ problem.oj_name.upper() }}-{{ problem.problem_id }}{% endblock %}
 
+{% block head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+{% endblock %}
+
 {% block page_content %}
 <div class="page-header">
     <h1>{{ problem.title }}</h1>
@@ -49,18 +55,43 @@
         </div>
         <form id="submit_form" method="post" action="{{url_for('main.submit')}}" onsubmit="submitEncode()">
             {{ form.hidden_tag() }}
+            <div class="row">
+                <div class="col-md-6 problem-limit">
+                    <b>Time limit:&nbsp;</b>
+                    {% if problem.time_limit %}
+                    {{ problem.time_limit }}
+                    {% else %} 1000 {% endif %}
+                    &nbsp;ms<br>
+                    <b>Memory limit:&nbsp;</b>
+                    {% if problem.mem_limit %}
+                    {{ problem.mem_limit }}
+                    {% else %} 65536 {% endif %}
+                    &nbsp;kb
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group pull-right">
+                        <label>
+                            <select id="language" class="selectpicker form-control" name="language" data-live-search="true"
+                                    data-width="100px">
+                                <option value="C" data-tokens="C">C</option>
+                                <option value="C++" data-tokens="C++" selected>C++</option>
+                                <option value="Java" data-tokens="Java">Java</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
             <div class="panel panel-default">
                 <div id="editor"></div>
             </div>
-            <div class="row problem-submit">
-                <div class="col-md-5 col-sm-5 col-xs-8">
-                    <input type="file" class="filestyle" data-text="Or choose file" data-buttonBefore="true"
-                           data-btnClass="btn-primary btn-info">
-                </div>
-                <div class="col-md-7 col-sm-7 col-xs-4">
-                    <button type="submit" class="btn btn-info pull-right">Submit</button>
-                </div>
+            <div class="problem-submit checkbox">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <label>
+                    <input id="share" name="share" type="checkbox" value="y">
+                    <span>Share your code with others</span>
+                </label>
             </div>
+
         </form>
     </div>
     <div class="col-md-3 hidden-xs hidden-sm">
@@ -92,7 +123,7 @@
 <script src="https://cdn.bootcss.com/ace/1.2.9/ace.js"></script>
 <script src="https://cdn.bootcss.com/ace/1.2.9/ext-language_tools.js"></script>
 <script src="https://cdn.bootcss.com/ace/1.2.9/theme-chrome.js"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='filestyle/bootstrap-filestyle.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
 <script>
     var editor = ace.edit("editor");
     editor.session.setMode("ace/mode/c_cpp");
@@ -100,7 +131,19 @@
     editor.setAutoScrollEditorIntoView(true);
     document.getElementById('editor').style.fontSize = '14px';
     $(document).ready(function () {
-        $('select').material_select();
+        $("select").change(function () {
+            switch ($(this).val()) {
+                case "C":
+                    editor.session.setMode("ace/mode/c_cpp");
+                    break;
+                case "C++":
+                    editor.session.setMode("ace/mode/c_cpp");
+                    break;
+                case  "Java":
+                    editor.session.setMode("ace/mode/java");
+                    break;
+            }
+        });
     });
 
     function submitEncode() {

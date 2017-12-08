@@ -177,7 +177,7 @@ def refresh_problem(oj_name, problem_id):
 @main.route('/submit', methods=['POST'])
 @login_required
 def submit():
-    form = SubmitProblemForm()
+    form = SubmitProblemForm([('C', 'C'), ('C++', 'C++'), ('Java', 'Java')])
     if not form.validate_on_submit():
         abort(403)
     return redirect('http://127.0.0.1:5000/problem/hdu/6242')
