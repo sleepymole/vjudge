@@ -2,9 +2,10 @@ from flask import current_app, render_template, request, flash, redirect, abort,
 from flask_login import login_required, current_user
 from sqlalchemy import and_
 from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm
-from ..models import db, User, Role, Permission, Problem
+from ..models import db, User, Role, Permission, Problem, Submission
 from ..decorators import admin_required, permission_required
 from . import main
+from .. import tasks
 
 
 @main.route('/')
@@ -171,13 +172,28 @@ def edit_problem(oj_name, problem_id):
 @main.route('/refresh-problem/<oj_name>/<problem_id>', methods=['POST'])
 @permission_required(Permission.MODERATE)
 def refresh_problem(oj_name, problem_id):
+    tasks.refresh_problem.delay(oj_name=oj_name, problem_id=problem_id)
     return ''
 
 
 @main.route('/submit', methods=['POST'])
 @login_required
 def submit():
-    form = SubmitProblemForm([('C', 'C'), ('C++', 'C++'), ('Java', 'Java')])
+    langs = ['C', 'C++', 'Java']
+    form = SubmitProblemForm([(name, name) for name in langs])
     if not form.validate_on_submit():
         abort(403)
-    return redirect('http://127.0.0.1:5000/problem/hdu/6242')
+    oj_name = form.oj_name.data
+    problem_id = form.problem_id.data
+    language = form.language.data
+    if Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first() is None \
+            or language not in langs:
+        abort(404)
+    source_code = form.source_code.data
+    share = form.share.data
+    submission = Submission(user_id=current_user.id, oj_name=oj_name, problem_id=problem_id, language=language,
+                            source_code=source_code, share=share)
+    db.session.add(submission)
+    db.session.commit()
+    tasks.submit_problem.delay(submission.id)
+    return redirect(url_for('.problem_list'))

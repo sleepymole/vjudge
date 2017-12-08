@@ -9,6 +9,9 @@ class Config(object):
     BOOTSTRAP_SERVE_LOCAL = True
     FLASKY_ADMIN = 'admin'
     FLASKY_FOLLOWERS_PER_PAGE = 20
+    CELERY_BROKER_URL = 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+    VJUDGE_REMOTE_URL = 'http://'
 
 
 class DevelopmentConfig(Config):
@@ -27,5 +30,5 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig
+    'default': ProductionConfig
 }

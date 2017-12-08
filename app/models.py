@@ -56,11 +56,12 @@ class Submission(db.Model):
     problem_id = db.Column(db.String, nullable=False)
     language = db.Column(db.String, nullable=False)
     source_code = db.Column(db.String, nullable=False)
+    share = db.Column(db.Boolean, default=False)
     run_id = db.Column(db.String)
-    verdict = db.Column(db.String)
+    verdict = db.Column(db.String, default='Queuing')
     exe_time = db.Column(db.Integer)
     exe_mem = db.Column(db.Integer)
-    time_stamp = db.Column(db.DateTime)
+    time_stamp = db.Column(db.DateTime, default=datetime.utcnow)
     __table_args__ = (db.ForeignKeyConstraint(
         ['oj_name', 'problem_id'], ['problems.oj_name', 'problems.problem_id']), {})
 
@@ -179,7 +180,7 @@ class Problem(db.Model):
     __tablename__ = 'problems'
     oj_name = db.Column(db.String, primary_key=True)
     problem_id = db.Column(db.String, primary_key=True)
-    last_update = db.Column(db.DateTime, nullable=False)
+    last_update = db.Column(db.DateTime, default=datetime.utcnow)
     solved = db.Column(db.Integer, default=0)
     title = db.Column(db.String)
     description = db.Column(db.String)
