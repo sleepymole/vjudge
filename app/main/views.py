@@ -270,10 +270,17 @@ def status():
 
     if 'username' in query_args:
         username = query_args.pop('username')
-        pagination = Submission.query.filter_by(**query_args).filter(User.username == username).order_by(
-            Submission.id.desc()).paginate(page, per_page=per_page, error_out=False)
-    else:
-        pagination = Submission.query.filter_by(**query_args).order_by(Submission.id.desc()). \
-            paginate(page, per_page=per_page, error_out=False)
+        query_args['user_id'] = db.session.query(User.id.label('user_id')). \
+            filter_by(username=username).first().user_id
+
+    pagination = Submission.query.filter_by(**query_args).order_by(Submission.id.desc()). \
+        paginate(page, per_page=per_page, error_out=False)
     submissions = [{'username': item.user.username, 'data': item} for item in pagination.items]
-    return render_template('status.html', submissions=submissions, endpoint='.status', pagination=pagination)
+
+    return render_template('status.html', submissions=submissions, endpoint='.status',
+                           pagination=pagination, oj=oj_name or 'all')
+
+
+@main.route('/ranklist')
+def rank_list():
+    return render_template('rank_list.html')

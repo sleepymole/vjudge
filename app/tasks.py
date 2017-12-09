@@ -44,20 +44,25 @@ def refresh_submit_status(self, id):
     except requests.exceptions.RequestException as exc:
         raise self.retry(exc=exc, countdown=5)
     verdict = r.json().get('verdict', 'Queuing')
-    exe_time = r.json().get('exe_time', 0)
-    exe_mem = r.json().get('exe_mem', 0)
+    exe_time = r.json().get('exe_time', None)
+    exe_mem = r.json().get('exe_mem', None)
     if verdict and verdict != submission.verdict:
         submission.verdict = verdict
-        submission.exe_time = exe_time
-        submission.exe_mem = exe_mem
-        db.session.commit()
-    if verdict == 'Accepted':
-        problem = Problem.query.filter_by(
-            oj_name=submission.oj_name, problem_id=submission.problem_id).first()
-        problem.solved += 1
+        submission.exe_time = exe_time or 0
+        submission.exe_mem = exe_mem or 0
         db.session.commit()
     if verdict in ('Queuing', 'Being Judged'):
         raise self.retry(max_retries=300, countdown=1)
+    if verdict == 'Accepted':
+        if Submission.query.filter_by(
+                user_id=submission.user_id,
+                oj_name=submission.oj_name,
+                problem_id=submission.problem_id,
+                verdict='Accepted').count() == 1:
+            problem = Problem.query.filter_by(
+                oj_name=submission.oj_name, problem_id=submission.problem_id).first()
+            problem.solved += 1
+            db.session.commit()
 
 
 @celery.task(bind=True)

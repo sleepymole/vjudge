@@ -94,7 +94,7 @@ class User(UserMixin, db.Model):
                                 cascade='all, delete-orphan')
     submissions = db.relationship('Submission',
                                   foreign_keys=[Submission.user_id],
-                                  backref=db.backref('user', lazy='joined'),
+                                  backref='user',
                                   lazy='dynamic')
 
     def __init__(self):
