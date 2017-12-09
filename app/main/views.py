@@ -234,10 +234,12 @@ def status():
     if oj_name == 'all':
         oj_name = None
     problem_id = request.args.get('problem_id', None)
+    verdict = request.args.get('verdict', None)
     page = request.args.get('page', None, type=int)
     query = request.args.get('query', None)
 
-    query_dict = dict(id=id, username=username, oj_name=oj_name, problem_id=problem_id, page=page)
+    query_dict = dict(id=id, username=username, oj_name=oj_name,
+                      problem_id=problem_id, verdict=verdict, page=page)
     if query:
         words = query.split()
         for word in words:
@@ -245,6 +247,8 @@ def status():
                 query_dict['username'] = word
             elif Problem.query.filter_by(problem_id=word).first():
                 query_dict['problem_id'] = word
+            elif word.lower() == 'accepted':
+                query_dict['verdict'] = 'Accepted'
 
     query_args = {}
     for k in query_dict:
