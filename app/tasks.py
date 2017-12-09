@@ -51,6 +51,11 @@ def refresh_submit_status(self, id):
         submission.exe_time = exe_time
         submission.exe_mem = exe_mem
         db.session.commit()
+    if verdict == 'Accepted':
+        problem = Problem.query.filter_by(
+            oj_name=submission.oj_name, problem_id=submission.problem_id).first()
+        problem.solved += 1
+        db.session.commit()
     if verdict in ('Queuing', 'Being Judged'):
         raise self.retry(max_retries=300, countdown=1)
 

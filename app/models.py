@@ -59,8 +59,8 @@ class Submission(db.Model):
     share = db.Column(db.Boolean, default=False)
     run_id = db.Column(db.String)
     verdict = db.Column(db.String, default='Queuing')
-    exe_time = db.Column(db.Integer)
-    exe_mem = db.Column(db.Integer)
+    exe_time = db.Column(db.Integer, default=0)
+    exe_mem = db.Column(db.Integer, default=0)
     time_stamp = db.Column(db.DateTime, default=datetime.utcnow)
     __table_args__ = (db.ForeignKeyConstraint(
         ['oj_name', 'problem_id'], ['problems.oj_name', 'problems.problem_id']), {})
@@ -94,7 +94,7 @@ class User(UserMixin, db.Model):
                                 cascade='all, delete-orphan')
     submissions = db.relationship('Submission',
                                   foreign_keys=[Submission.user_id],
-                                  backref='user',
+                                  backref=db.backref('user', lazy='joined'),
                                   lazy='dynamic')
 
     def __init__(self):

@@ -10,6 +10,34 @@ body {
     padding-bottom: 40%;
 }
 
+.verdict {
+    color: #c9302c;
+}
+
+.accepted {
+    color: #3c763d;
+}
+
+.queuing {
+    color: #5e5e5e;
+}
+
+.being-judged {
+    color: #5e5e5e;
+}
+
+.submit-failed {
+    color: #5e5e5e;
+}
+
+.judge-failed {
+    color: #5e5e5e;
+}
+
+.compilation-error {
+    color: black;
+}
+
 .ace-editor {
     position: relative;
     border: 1px solid lightgray;

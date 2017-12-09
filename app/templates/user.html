@@ -3,7 +3,7 @@
 
 {% block page_content %}
 <div class="page-header">
-    <img class="img-rounded profile-thumbnail" src="http://www.gravatar.com/avatar?s=256&d=identicon&r=g">
+    <img class="img-rounded profile-thumbnail" src="{{ url_for('static', filename='avatar/large.png') }}">
     <div class="profile-header">
         <h1>{{ user.username }}</h1>
         {% if user.name or user.location %}

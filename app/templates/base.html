@@ -25,7 +25,7 @@
                 <li><a href="{{ url_for('main.problem_list') }}">Problem</a></li>
             </ul>
             <ul class="nav navbar-nav">
-                <li><a href="{{ url_for('main.index') }}">Status</a></li>
+                <li><a href="{{ url_for('main.status') }}">Status</a></li>
             </ul>
             <ul class="nav navbar-nav">
                 <li><a href="{{ url_for('main.index') }}">Contest</a></li>
@@ -37,7 +37,7 @@
                 {% if current_user.is_authenticated %}
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                        <img src="http://www.gravatar.com/avatar?s=18&d=identicon&r=g">
+                        <img src="{{ url_for('static', filename='avatar/small.png') }}">
                         {{current_user.username}}<b
                             class="caret"></b></a>
                     <ul class="dropdown-menu">
