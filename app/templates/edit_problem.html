@@ -12,15 +12,15 @@
             </div>
             <div class="panel panel-default">
                 <div class="panel-heading"><b>Description</b></div>
-                <div id="description-editor" class="ace-editor">{{ problem.description }}</div>
+                <div id="description-editor" class="ace-editor">{% if problem.description %}{{ problem.description }}{% endif %}</div>
             </div>
             <div class="panel panel-default">
                 <div class="panel-heading"><b>Input</b></div>
-                <div id="input-editor" class="ace-editor">{{ problem.input }}</div>
+                <div id="input-editor" class="ace-editor">{% if problem.input %}{{ problem.input }}{% endif %}</div>
             </div>
             <div class="panel panel-default">
                 <div class="panel-heading"><b>Output</b></div>
-                <div id="output-editor" class="ace-editor">{{ problem.output }}</div>
+                <div id="output-editor" class="ace-editor">{% if problem.output %}{{ problem.output }}{% endif %}</div>
             </div>
             <div class="panel panel-default">
                 <div class="panel-heading"><b>Sample input</b></div>

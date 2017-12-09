@@ -84,6 +84,8 @@ def update_problem(self, oj_name, problem_id):
         problem = Problem()
     for attr in r.json():
         if attr != 'last_update' and hasattr(problem, attr):
-            setattr(problem, attr, r.json()[attr])
+            value = r.json()[attr]
+            if value:
+                setattr(problem, attr, value)
     db.session.add(problem)
     db.session.commit()

@@ -177,10 +177,8 @@ def edit_problem(oj_name, problem_id):
         db.session.add(problem)
         flash('The problem has been updated.')
         return redirect(url_for('.edit_problem', oj_name=oj_name, problem_id=problem_id))
-    print(list(request.form))
-    sample_input = BeautifulSoup(problem.sample_input, 'lxml').text
-    sample_output = BeautifulSoup(problem.sample_output, 'lxml').text
-
+    sample_input = BeautifulSoup(problem.sample_input, 'lxml').text if problem.sample_input else ''
+    sample_output = BeautifulSoup(problem.sample_output, 'lxml').text if problem.sample_output else ''
     return render_template('edit_problem.html', problem=problem, sample_input=sample_input,
                            sample_output=sample_output, form=form)
 

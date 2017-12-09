@@ -29,8 +29,10 @@
             <a href="{{ url_for('.problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}">
                 {{ problem.title }}</a>&nbsp;
             {% if current_user.can(Permission.MODERATE) %}
+            <button type="button" class="btn btn-default">
             <span class="glyphicon glyphicon-refresh problem-refresh"
                   id="{{ problem.oj_name }}-{{ problem.problem_id }}"></span>
+            </button>
             {% endif %}
         </td>
         <td>0</td>

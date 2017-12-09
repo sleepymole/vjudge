@@ -8,7 +8,7 @@ from config import config, Config
 
 bootstrap = Bootstrap()
 moment = Moment()
-db = SQLAlchemy()
+db = SQLAlchemy(session_options={"autoflush": False})
 celery = Celery(__name__, broker=Config.CELERY_BROKER_URL)
 
 login_manager = LoginManager()
