@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}VJudge - Ranklist{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Ranklist</h1>
+</div>
+<form action="" method="get">
+    <div class="row ">
+        <div class="col-md-3 col-sm-4 col-xs-6">
+            <div class="input-group">
+                <input name="query" value="" type="text" class="form-control" placeholder="Search for...">
+                <span class="input-group-btn">
+                    <button type="submit" class="btn btn-default" type="button">Go</button>
+                </span>
+            </div>
+        </div>
+    </div>
+</form>
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>OJ</th>
+        <th>Problem</th>
+        <th>Lang</th>
+        <th>Verdict</th>
+        <th>Time</th>
+        <th>Memory</th>
+        <th>Submit time</th>
+    </tr>
+    </thead>
+    {% for submission in submissions %}
+    <tr>
+        <td>{{ submission.data.id }}</td>
+        <td><a href="{{ url_for('.user', username = submission.username) }}">
+            <img class="img-rounded" src="{{ url_for('static', filename='avatar/middle.png') }}">
+            {{ submission.username }}
+        </a></td>
+        <td>{{ submission.data.oj_name.upper() }}</td>
+        <td>
+            <a href="{{ url_for('.problem',oj_name=submission.data.oj_name,problem_id=submission.data.problem_id) }}">{{
+                submission.data.problem_id }}</a>
+        </td>
+        <td>{{ submission.data.language }}</td>
+        <td class="{{ submission.data.verdict.replace(' ','-').lower() }} verdict">{{ submission.data.verdict }}</td>
+        <td>{{ submission.data.exe_time }}</td>
+        <td>{{ submission.data.exe_mem }}</td>
+        <td>{{ moment(submission.data.time_stamp).format('YYYY-MM-DD kk:mm:ss') }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+{% endblock %}

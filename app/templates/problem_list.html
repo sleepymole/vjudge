@@ -62,7 +62,7 @@
             </button>
             {% endif %}
         </td>
-        <td>0</td>
+        <td>{{ problem.solved }}</td>
         <td>{{ moment(problem.last_update).format('L') }}</td>
         {% if current_user.can(Permission.MODERATE) %}
         <th>
