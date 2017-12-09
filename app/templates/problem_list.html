@@ -1,10 +1,37 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block title %}VJudge - Problem list{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+{% endblock %}
+
 {% block page_content %}
 <div class="page-header">
     <h1>Problem list</h1>
 </div>
+<form action="" method="get">
+    <div class="row ">
+        <label class="col-md-2 col-sm-3 col-xs-5">
+            <select id="{{ oj }}" class="selectpicker form-control" name="oj" data-live-search="true"
+                    style="width: 100%">
+                <option value="all" data-tokens="all">ALL</option>
+                <option value="scu" data-tokens="scu">SCU</option>
+                <option value="hdu" data-tokens="hdu">HDU</option>
+            </select>
+        </label>
+        <div class="col-md-3 col-sm-4 col-xs-6">
+            <div class="input-group">
+                <input name="problem_id" value="" type="text" class="form-control" placeholder="Search for...">
+                <span class="input-group-btn">
+                    <button type="submit" class="btn btn-default" type="button">Go!</button>
+                </span>
+            </div>
+        </div>
+    </div>
+</form>
 <table class="table table-hover">
     <thead>
     <tr>
@@ -56,6 +83,7 @@
 {% endblock %}
 {% block scripts %}
 {{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
 <script>
     $(document).ready(function () {
         $(".problem-refresh").click(function () {
@@ -63,6 +91,8 @@
             var url = 'refresh-problem/' + prob[0] + '/' + prob[1];
             $.post(url);
         });
+        s = $("select");
+        s.val(s.attr('id'));
     });
 </script>
 {% endblock %}

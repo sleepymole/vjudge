@@ -151,6 +151,18 @@ def problem_list():
     problem_id = request.args.get('problem_id', None)
     page = request.args.get('page', 1, type=int)
     per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
+    kwargs = dict(request.args)
+    for k in kwargs:
+        kwargs[k] = kwargs[k][0]
+    if oj_name == 'all':
+        if 'oj' in kwargs:
+            kwargs.pop('oj')
+        if 'problem_id' in kwargs:
+            kwargs.pop('problem_id')
+        return redirect(url_for('.problem_list', **kwargs))
+    if problem_id == '':
+        kwargs.pop('problem_id')
+        return redirect(url_for('.problem_list', **kwargs))
     pagination = Problem.query.filter(
         and_(Problem.oj_name.like(oj_name or '%'),
              Problem.problem_id.like(problem_id or '%'))). \
