@@ -1,4 +1,4 @@
-from flask import current_app, render_template, request, flash, redirect, abort, url_for
+from flask import current_app, render_template, request, flash, redirect, abort, url_for, Markup
 from flask_login import login_required, current_user
 from sqlalchemy import and_
 from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm, EditProblemForm
@@ -142,7 +142,16 @@ def problem(oj_name, problem_id=None):
     form = SubmitProblemForm()
     form.oj_name.data = oj_name
     form.problem_id.data = problem_id
-    return render_template('problem.html', problem=problem, form=form)
+    res = db.session.query(Submission.source_code.label('code'), Submission.language.label('lang')). \
+        filter_by(user_id=current_user.id, oj_name=oj_name, problem_id=problem_id).order_by(
+        Submission.id.desc()).first()
+    if res:
+        source_code = res.code
+        language = res.lang
+    else:
+        source_code = ''
+        language = 'C++'
+    return render_template('problem.html', problem=problem, form=form, source_code=source_code, language=language)
 
 
 @main.route('/problem')

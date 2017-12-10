@@ -62,7 +62,7 @@
         <td class="{{ submission.data.verdict.replace(' ','-').lower() }} verdict">{{ submission.data.verdict }}</td>
         <td>{{ submission.data.exe_time }}</td>
         <td>{{ submission.data.exe_mem }}</td>
-        <td>{{ moment(submission.data.time_stamp).format('YYYY-MM-DD kk:mm:ss') }}</td>
+        <td>{{ moment(submission.data.time_stamp).format('YYYY-MM-DD HH:mm:ss') }}</td>
     </tr>
     {% endfor %}
 </table>

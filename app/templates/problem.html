@@ -71,7 +71,7 @@
                 <div class="col-md-6">
                     <div class="form-group pull-right">
                         <label>
-                            <select id="language" class="selectpicker form-control" name="language" data-live-search="true"
+                            <select id="{{ language }}" class="selectpicker form-control" name="language" data-live-search="true"
                                     data-width="100px">
                                 <option value="C" data-tokens="C">C</option>
                                 <option value="C++" data-tokens="C++" selected>C++</option>
@@ -82,7 +82,7 @@
                 </div>
             </div>
             <div class="panel panel-default">
-                <div id="editor"></div>
+                <div id="editor">{{ source_code }}</div>
             </div>
             <div class="problem-submit checkbox">
                 <button type="submit" class="btn btn-primary">Submit</button>
@@ -94,7 +94,7 @@
 
         </form>
     </div>
-    <div class="col-md-3 hidden-xs hidden-sm">
+    <div class="col-md-3 hidden-xs hidden-sm hidden">
         <div class="panel panel-default">
             <div class="panel-heading"><b>Recent News</b></div>
             <div class="panel-body">XYZ</div>
@@ -145,6 +145,9 @@
             }
         });
     });
+
+    s = $("select");
+    s.val(s.attr('id'));
 
     function submitEncode() {
         var form = document.getElementById('submit_form');

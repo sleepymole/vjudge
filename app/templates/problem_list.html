@@ -63,7 +63,7 @@
             {% endif %}
         </td>
         <td>{{ problem.solved }}</td>
-        <td>{{ moment(problem.last_update).format('L') }}</td>
+        <td>{{ moment(problem.last_update).format('YYYY-MM-DD HH:mm') }}</td>
         {% if current_user.can(Permission.MODERATE) %}
         <th>
             <a href="{{ url_for('.edit_problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}"

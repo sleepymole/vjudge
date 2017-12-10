@@ -20,7 +20,7 @@
         {% endif %}
         {% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
         <p>
-            Member since {{ moment(user.member_since).format('L') }}.
+            Member since {{ moment(user.member_since).format('YYYY-MM-DD') }}.
             Last seen {{ moment(user.last_seen).fromNow() }}.
         </p>
         <p>
