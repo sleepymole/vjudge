@@ -249,6 +249,8 @@ def status():
                 query_dict['problem_id'] = word
             elif word.lower() == 'accepted':
                 query_dict['verdict'] = 'Accepted'
+            elif word.lower() in ('scu', 'hdu'):
+                query_dict['oj_name'] = word.lower()
 
     query_args = {}
     for k in query_dict:
@@ -287,4 +289,25 @@ def status():
 
 @main.route('/ranklist')
 def rank_list():
-    return render_template('rank_list.html')
+    username = request.args.get('user')
+    page = request.args.get('page', None, type=int)
+    per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
+    if username == '':
+        return redirect(url_for('.rank_list'))
+    if username and page:
+        return redirect(url_for('.rank_list', user=username))
+
+    page = page if page else 1
+    if username:
+        pagination = User.query.filter_by(username=username).order_by(User.solved.desc()). \
+            order_by(User.submitted).paginate(page, per_page=per_page, error_out=False)
+    else:
+        pagination = User.query.order_by(User.solved.desc()).order_by(User.submitted). \
+            paginate(page, per_page=per_page, error_out=False)
+
+    users = []
+    rank = (page - 1) * per_page + 1
+    for item in pagination.items:
+        users.append({'rank': rank, 'username': item.username, 'solved': item.solved, 'submitted': item.submitted,
+                      'last_seen': item.last_seen})
+    return render_template('rank_list.html', users=users, endpoint='.rank_list', pagination=pagination)

@@ -16,7 +16,7 @@
     <div class="row ">
         <div class="col-md-3 col-sm-4 col-xs-6">
             <div class="input-group">
-                <input name="query" value="" type="text" class="form-control" placeholder="Search for...">
+                <input name="user" value="" type="text" class="form-control" placeholder="Search for...">
                 <span class="input-group-btn">
                     <button type="submit" class="btn btn-default" type="button">Go</button>
                 </span>
@@ -27,37 +27,35 @@
 <table class="table table-hover">
     <thead>
     <tr>
-        <th>ID</th>
+        <th>Rank</th>
         <th>User</th>
-        <th>OJ</th>
-        <th>Problem</th>
-        <th>Lang</th>
-        <th>Verdict</th>
-        <th>Time</th>
-        <th>Memory</th>
-        <th>Submit time</th>
+        <th>Solved</th>
+        <th>Submitted</th>
+        <th>Last seen</th>
     </tr>
     </thead>
-    {% for submission in submissions %}
+    {% for user in users %}
     <tr>
-        <td>{{ submission.data.id }}</td>
-        <td><a href="{{ url_for('.user', username = submission.username) }}">
+        <td>{{ user.rank }}</td>
+        <td><a href="{{ url_for('.user', username = user.username) }}">
             <img class="img-rounded" src="{{ url_for('static', filename='avatar/middle.png') }}">
-            {{ submission.username }}
-        </a></td>
-        <td>{{ submission.data.oj_name.upper() }}</td>
-        <td>
-            <a href="{{ url_for('.problem',oj_name=submission.data.oj_name,problem_id=submission.data.problem_id) }}">{{
-                submission.data.problem_id }}</a>
+            {{ user.username }}</a>
         </td>
-        <td>{{ submission.data.language }}</td>
-        <td class="{{ submission.data.verdict.replace(' ','-').lower() }} verdict">{{ submission.data.verdict }}</td>
-        <td>{{ submission.data.exe_time }}</td>
-        <td>{{ submission.data.exe_mem }}</td>
-        <td>{{ moment(submission.data.time_stamp).format('YYYY-MM-DD kk:mm:ss') }}</td>
+        <td>
+            <a href="{{ url_for('.status', user = user.username, verdict='Accepted') }}">
+                {{ user.solved }}</a>
+        </td>
+        <td>
+            <a href="{{ url_for('.status', user = user.username) }}">
+                {{ user.submitted }}</a>
+        </td>
+        <td>{{ moment(user.last_seen).format('YYYY-MM-DD kk:mm') }}</td>
     </tr>
     {% endfor %}
 </table>
+<div class="pagination">
+    {{ macros.pagination_widget(pagination, endpoint) }}
+</div>
 {% endblock %}
 {% block scripts %}
 {{ super() }}

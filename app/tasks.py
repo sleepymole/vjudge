@@ -53,16 +53,17 @@ def refresh_submit_status(self, id):
         db.session.commit()
     if verdict in ('Queuing', 'Being Judged'):
         raise self.retry(max_retries=300, countdown=1)
-    if verdict == 'Accepted':
-        if Submission.query.filter_by(
-                user_id=submission.user_id,
-                oj_name=submission.oj_name,
-                problem_id=submission.problem_id,
-                verdict='Accepted').count() == 1:
-            problem = Problem.query.filter_by(
-                oj_name=submission.oj_name, problem_id=submission.problem_id).first()
-            problem.solved += 1
-            db.session.commit()
+    user = submission.user
+    user.submitted += 1
+    if verdict == 'Accepted' and \
+            Submission.query.filter_by(user_id=submission.user_id, oj_name=submission.oj_name,
+                                       problem_id=submission.problem_id,
+                                       verdict='Accepted').count() == 1:
+        problem = submission.problem
+        problem.solved += 1
+        user = submission.user
+        user.solved += 1
+    db.session.commit()
 
 
 @celery.task(bind=True)
