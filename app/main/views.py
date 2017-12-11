@@ -25,7 +25,7 @@ def user(username):
 @main.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
-    form = EditProfileForm()
+    form = EditProfileForm(current_user)
     if form.validate_on_submit():
         current_user.name = form.name.data
         current_user.email = form.email.data
@@ -48,7 +48,7 @@ def edit_profile_admin(id):
     user = User.query.get(id)
     if user is None:
         abort(404)
-    form = EditProfileAdminForm()
+    form = EditProfileAdminForm(user)
     if form.validate_on_submit():
         user.username = form.username.data
         user.role = Role.query.get(form.role.data)
@@ -337,4 +337,4 @@ def source_code():
     language = 'c_cpp'
     if submission.language == 'Java':
         language = 'java'
-    return render_template('source_code.html',submission=submission, username=username, language=language)
+    return render_template('source_code.html', submission=submission, username=username, language=language)
