@@ -319,6 +319,7 @@ def rank_list():
     for item in pagination.items:
         users.append({'rank': rank, 'username': item.username, 'solved': item.solved, 'submitted': item.submitted,
                       'last_seen': item.last_seen})
+        rank += 1
     return render_template('rank_list.html', users=users, endpoint='.rank_list', pagination=pagination)
 
 
