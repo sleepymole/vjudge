@@ -320,3 +320,21 @@ def rank_list():
         users.append({'rank': rank, 'username': item.username, 'solved': item.solved, 'submitted': item.submitted,
                       'last_seen': item.last_seen})
     return render_template('rank_list.html', users=users, endpoint='.rank_list', pagination=pagination)
+
+
+@main.route('/source')
+def source_code():
+    run_id = request.args.get('id', None, type=int)
+    if not run_id:
+        abort(404)
+    submission = Submission.query.get(run_id)
+    if not submission:
+        abort(404)
+    if not current_user.can(Permission.MODERATE) and \
+            not submission.share and submission.user_id != current_user.id:
+        abort(403)
+    username = submission.user.username
+    language = 'c_cpp'
+    if submission.language == 'Java':
+        language = 'java'
+    return render_template('source_code.html',submission=submission, username=username, language=language)

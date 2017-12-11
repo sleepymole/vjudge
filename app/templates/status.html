@@ -47,7 +47,7 @@
     </tr>
     </thead>
     {% for submission in submissions %}
-    <tr>
+    <tr class="align-middle align-text-top">
         <td>{{ submission.data.id }}</td>
         <td><a href="{{ url_for('.user', username = submission.username) }}">
             <img class="img-rounded" src="{{ url_for('static', filename='avatar/middle.png') }}">
@@ -58,7 +58,14 @@
             <a href="{{ url_for('.problem',oj_name=submission.data.oj_name,problem_id=submission.data.problem_id) }}">{{
                 submission.data.problem_id }}</a>
         </td>
-        <td>{{ submission.data.language }}</td>
+        <td>
+            {% if submission.data.share or current_user.id == submission.data.user_id or
+            current_user.can(Permission.MODERATE) %}
+            <a href="{{ url_for('.source_code', id=submission.data.id )}}">{{ submission.data.language }}</a>
+            {% else %}
+            {{ submission.data.language }}
+            {% endif %}
+        </td>
         <td class="{{ submission.data.verdict.replace(' ','-').lower() }} verdict">{{ submission.data.verdict }}</td>
         <td>{{ submission.data.exe_time }}</td>
         <td>{{ submission.data.exe_mem }}</td>
