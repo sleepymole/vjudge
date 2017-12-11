@@ -71,7 +71,8 @@
                 <div class="col-md-6">
                     <div class="form-group pull-right">
                         <label>
-                            <select id="{{ language }}" class="selectpicker form-control" name="language" data-live-search="true"
+                            <select id="{{ language }}" class="selectpicker form-control" name="language"
+                                    data-live-search="true"
                                     data-width="100px">
                                 <option value="C" data-tokens="C">C</option>
                                 <option value="C++" data-tokens="C++" selected>C++</option>
@@ -116,6 +117,10 @@
     MathJax.Hub.Config({
     tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
 });
+
+
+
+
 </script>
 <script type="text/javascript" async
         src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
@@ -131,7 +136,20 @@
     editor.setAutoScrollEditorIntoView(true);
     document.getElementById('editor').style.fontSize = '14px';
     $(document).ready(function () {
-        $("select").change(function () {
+        s = $("select");
+        s.val(s.attr('id'));
+        switch (s.val()) {
+            case "C":
+                editor.session.setMode("ace/mode/c_cpp");
+                break;
+            case "C++":
+                editor.session.setMode("ace/mode/c_cpp");
+                break;
+            case  "Java":
+                editor.session.setMode("ace/mode/java");
+                break;
+        }
+        $s.change(function () {
             switch ($(this).val()) {
                 case "C":
                     editor.session.setMode("ace/mode/c_cpp");
@@ -145,9 +163,6 @@
             }
         });
     });
-
-    s = $("select");
-    s.val(s.attr('id'));
 
     function submitEncode() {
         var form = document.getElementById('submit_form');
