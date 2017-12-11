@@ -1,4 +1,4 @@
-from flask import current_app, render_template, request, flash, redirect, abort, url_for, Markup
+from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import and_
 from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm, EditProblemForm
