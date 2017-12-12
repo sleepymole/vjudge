@@ -271,6 +271,8 @@ def status():
         kwargs['user'] = kwargs.pop('username')
     if 'oj_name' in kwargs:
         kwargs['oj'] = kwargs.pop('oj_name')
+    if 'page' in kwargs:
+        kwargs['page'] = str(kwargs['page'])
 
     if len(kwargs) != len(request.args):
         return redirect(url_for('.status', **kwargs))
