@@ -26,20 +26,21 @@ def crawl_problem():
     url = Config.VJUDGE_REMOTE_URL + '/problems/'
     while url:
         r = s.get(url)
-        for p in r.json()['problems']:
+        url = r.json()['next']
+        problem_list = r.json()['problems']
+        for p in problem_list:
             oj_name = p['oj_name']
             problem_id = p['problem_id']
             problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first() or Problem()
-            r2 = s.get('{}/problems/{}/{}'.format(Config.VJUDGE_REMOTE_URL, oj_name, problem_id))
-            for attr in r2.json():
+            r = s.get('{}/problems/{}/{}'.format(Config.VJUDGE_REMOTE_URL, oj_name, problem_id))
+            for attr in r.json():
                 if attr == 'last_update':
-                    problem.last_update = datetime.fromtimestamp(r2.json()[attr])
+                    problem.last_update = datetime.fromtimestamp(r.json()[attr])
                 elif hasattr(problem, attr):
-                    setattr(problem, attr, r2.json()[attr])
+                    setattr(problem, attr, r.json()[attr])
             db.session.add(problem)
             db.session.commit()
             logging.info('problem update: {}'.format(problem))
-        url = r.json()['next']
 
 
 if __name__ == '__main__':

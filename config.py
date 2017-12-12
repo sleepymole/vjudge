@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 
 class Config(object):
@@ -10,9 +11,15 @@ class Config(object):
     BOOTSTRAP_SERVE_LOCAL = True
     FLASKY_ADMIN = 'admin'
     FLASKY_FOLLOWERS_PER_PAGE = 20
-    CELERY_BROKER_URL =os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/0'
-    CELERY_RESULT_BACKEND =os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/0'
-    VJUDGE_REMOTE_URL = os.environ.get('VJUDGE_REMOTE_URL') or 'http://localhost'
+    CELERYBEAT_SCHEDULE = {
+        'update-problems': {
+            'task': 'update_problem_all',
+            'schedule': timedelta(hours=1)
+        },
+    }
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/0'
+    VJUDGE_REMOTE_URL = os.environ.get('VJUDGE_REMOTE_URL') or 'http://localhost:5000'
 
 
 class DevelopmentConfig(Config):

@@ -89,10 +89,11 @@ def update_problem(self, oj_name, problem_id):
         raise self.retry()
     last_update = datetime.fromtimestamp(r.json()['last_update'])
     problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
-    if problem and last_update - problem.last_update < timedelta(minutes=1):
+    if problem and last_update - problem.last_update < timedelta(minutes=10):
         self.retry()
     if problem is None:
         problem = Problem()
+    problem.last_update = last_update
     for attr in r.json():
         if attr != 'last_update' and hasattr(problem, attr):
             value = r.json()[attr]
@@ -100,3 +101,34 @@ def update_problem(self, oj_name, problem_id):
                 setattr(problem, attr, value)
     db.session.add(problem)
     db.session.commit()
+
+
+@celery.task(bind=True, name='update_problem_all')
+def update_problem_all(self):
+    s = requests.session()
+    url = Config.VJUDGE_REMOTE_URL + '/problems/'
+    try:
+        while url:
+            r = s.get(url)
+            url = r.json()['next']
+            problem_list = r.json()['problems']
+            for p in problem_list:
+                oj_name = p['oj_name']
+                problem_id = p['problem_id']
+                problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
+                if problem and datetime.utcnow() - problem.last_update < timedelta(hours=12):
+                    continue
+                if problem is None:
+                    problem = Problem()
+                r = s.get('{}/problems/{}/{}'.format(Config.VJUDGE_REMOTE_URL, oj_name, problem_id))
+                for attr in r.json():
+                    if attr == 'last_update':
+                        problem.last_update = datetime.fromtimestamp(r.json()[attr])
+                    elif hasattr(problem, attr):
+                        value = r.json()[attr]
+                        if value:
+                            setattr(problem, attr, value)
+                db.session.add(problem)
+                db.session.commit()
+    except requests.exceptions.RequestException as exc:
+        raise self.retry(exc=exc, countdown=5)
