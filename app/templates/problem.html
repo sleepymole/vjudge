@@ -56,7 +56,7 @@
         <form id="submit_form" method="post" action="{{url_for('main.submit')}}" onsubmit="submitEncode()">
             {{ form.hidden_tag() }}
             <div class="row">
-                <div class="col-md-6 problem-limit">
+                <div class="col-md-6 col-sm-6 col-xs-6 problem-limit">
                     <b>Time limit:&nbsp;</b>
                     {% if problem.time_limit %}
                     {{ problem.time_limit }}
@@ -68,7 +68,7 @@
                     {% else %} 65536 {% endif %}
                     &nbsp;kb
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 col-sm-6 col-xs-6">
                     <div class="form-group pull-right">
                         <label>
                             <select id="{{ language }}" class="selectpicker form-control" name="language"
