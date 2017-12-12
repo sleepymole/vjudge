@@ -54,7 +54,7 @@
         </td>
         <td>
             <a href="{{ url_for('.problem',oj_name=problem.oj_name,problem_id=problem.problem_id) }}">
-                {{ problem.title }}</a>&nbsp;
+                {% autoescape false %}{{ problem.title }}{% endautoescape %}</a>&nbsp;
             {% if current_user.can(Permission.MODERATE) %}
             <button type="button" class="btn btn-default">
             <span class="glyphicon glyphicon-refresh problem-refresh"

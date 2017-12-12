@@ -9,7 +9,7 @@
 
 {% block page_content %}
 <div class="page-header">
-    <h1>{{ problem.title }}</h1>
+    <h1>{% autoescape false %}{{ problem.title }}{% endautoescape %}</h1>
 </div>
 <div class="row">
     <div class=" col-md-9 col-sm-12 col-xs-12">
