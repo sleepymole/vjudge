@@ -30,7 +30,7 @@ def crawl_problem():
             oj_name = p['oj_name']
             problem_id = p['problem_id']
             problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first() or Problem()
-            r2 = s.get('http://106.14.157.79/problems/{}/{}'.format(oj_name, problem_id))
+            r2 = s.get('{}/problems/{}/{}'.format(Config.VJUDGE_REMOTE_URL, oj_name, problem_id))
             for attr in r2.json():
                 if attr == 'last_update':
                     problem.last_update = datetime.fromtimestamp(r2.json()[attr])
