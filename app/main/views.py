@@ -142,15 +142,15 @@ def problem(oj_name, problem_id=None):
     form = SubmitProblemForm()
     form.oj_name.data = oj_name
     form.problem_id.data = problem_id
-    res = db.session.query(Submission.source_code.label('code'), Submission.language.label('lang')). \
-        filter_by(user_id=current_user.id, oj_name=oj_name, problem_id=problem_id).order_by(
-        Submission.id.desc()).first()
-    if res:
-        source_code = res.code
-        language = res.lang
-    else:
-        source_code = ''
-        language = 'C++'
+    source_code = ''
+    language = 'C++'
+    if current_user.is_authenticated:
+        res = db.session.query(Submission.source_code.label('code'), Submission.language.label('lang')). \
+            filter_by(user_id=current_user.id, oj_name=oj_name, problem_id=problem_id).order_by(
+            Submission.id.desc()).first()
+        if res:
+            source_code = res.code
+            language = res.lang
     return render_template('problem.html', problem=problem, form=form, source_code=source_code, language=language)
 
 
@@ -324,6 +324,7 @@ def rank_list():
 
 
 @main.route('/source')
+@login_required
 def source_code():
     run_id = request.args.get('id', None, type=int)
     if not run_id:

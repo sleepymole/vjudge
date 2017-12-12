@@ -59,8 +59,8 @@
                 submission.data.problem_id }}</a>
         </td>
         <td>
-            {% if submission.data.share or current_user.id == submission.data.user_id or
-            current_user.can(Permission.MODERATE) %}
+            {% if current_user.is_authenticated and (submission.data.share or current_user.id == submission.data.user_id
+            or current_user.can(Permission.MODERATE)) %}
             <a href="{{ url_for('.source_code', id=submission.data.id )}}">{{ submission.data.language }}</a>
             {% else %}
             {{ submission.data.language }}
