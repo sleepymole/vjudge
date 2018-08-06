@@ -13,8 +13,8 @@ class LoginForm(FlaskForm):
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[
-        DataRequired(), Regexp('^[A-Za-z][A-Za-z0-9_.]*$', message=
-        'Username must have only letters, nnumbers, dots or underscores')])
+        DataRequired(), Regexp('^[A-Za-z][A-Za-z0-9_.]*$',
+                               message='Username must have only letters, numbers, dots or underscores')])
     password = PasswordField('Password', validators=[
         DataRequired(), EqualTo('password2', message='Password must match')])
     password2 = PasswordField('Confirm password', validators=[DataRequired()])
