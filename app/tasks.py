@@ -5,13 +5,13 @@ from config import Config
 
 from datetime import datetime, timedelta
 
-base_url = Config.VJUDGE_REMOTE_URL
+BASE_URL = Config.VJUDGE_REMOTE_URL
 
 
 @celery.task(bind=True)
 def submit_problem(self, id):
     submission = Submission.query.get(int(id))
-    url = base_url + '/problems/'
+    url = f'{BASE_URL}/submissions/'
     s = requests.session()
     data = {
         'oj_name': submission.oj_name,
@@ -37,7 +37,7 @@ def submit_problem(self, id):
 @celery.task(bind=True)
 def refresh_submit_status(self, id):
     submission = Submission.query.get(int(id))
-    url = base_url + '/submissions/{}'.format(submission.run_id)
+    url = f'{BASE_URL}/submissions/{submission.run_id}'
     s = requests.session()
     try:
         r = s.get(url, timeout=5)
@@ -68,7 +68,7 @@ def refresh_submit_status(self, id):
 
 @celery.task(bind=True)
 def refresh_problem(self, oj_name, problem_id):
-    url = base_url + '/problems/{}/{}'.format(oj_name, problem_id)
+    url = f'{BASE_URL}/problems/{oj_name}/{problem_id}'
     s = requests.session()
     try:
         s.post(url, timeout=5)
@@ -79,7 +79,7 @@ def refresh_problem(self, oj_name, problem_id):
 
 @celery.task(bind=True, max_retries=10, default_retry_delay=5)
 def update_problem(self, oj_name, problem_id):
-    url = base_url + '/problems/{}/{}'.format(oj_name, problem_id)
+    url = f'{BASE_URL}/problems/{oj_name}/{problem_id}'
     s = requests.session()
     try:
         r = s.get(url, timeout=5)
