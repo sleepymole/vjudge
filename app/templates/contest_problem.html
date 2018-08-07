@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}VJudge - {{ contest.title }}-{{ problem.problem_id }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>{% autoescape false %}{{ problem.title }}{% endautoescape %}</h1>
+</div>
+<div class="row">
+    <div class=" col-md-9 col-sm-12 col-xs-12">
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Description</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.description }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Input</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.input }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Output</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.output }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Sample input</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.sample_input }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Sample output</b></div>
+            <div class="panel-body">
+                {% autoescape false %}
+                {{ problem.sample_output }}
+                {% endautoescape %}
+            </div>
+        </div>
+        <form id="submit_form" method="post" action="{{ url_for('contest.submit') }}" onsubmit="submitEncode()">
+            {{ form.hidden_tag() }}
+            <div class="row">
+                <div class="col-md-6 col-sm-6 col-xs-6 problem-limit">
+                    <b>Time limit:&nbsp;</b>
+                    {% if problem.time_limit %}
+                        {{ problem.time_limit }}
+                    {% else %} 1000 {% endif %}
+                    &nbsp;ms<br>
+                    <b>Memory limit:&nbsp;</b>
+                    {% if problem.mem_limit %}
+                        {{ problem.mem_limit }}
+                    {% else %} 65536 {% endif %}
+                    &nbsp;kb
+                </div>
+                <div class="col-md-6 col-sm-6 col-xs-6">
+                    <div class="form-group pull-right">
+                        <label>
+                            <select id="{{ language }}" class="selectpicker form-control" name="language"
+                                    data-live-search="true"
+                                    data-width="100px">
+                                <option value="C" data-tokens="C">C</option>
+                                <option value="C++" data-tokens="C++" selected>C++</option>
+                                <option value="Java" data-tokens="Java">Java</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div id="editor">{{ source_code }}</div>
+            </div>
+            <div class="problem-submit checkbox">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <label>
+                    <input id="share" name="share" type="checkbox" value="y">
+                    <span>Share your code with others</span>
+                </label>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+
+    </script>
+    <script type="text/javascript" async
+            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+    <script src="https://cdn.bootcss.com/ace/1.2.9/ace.js"></script>
+    <script src="https://cdn.bootcss.com/ace/1.2.9/ext-language_tools.js"></script>
+    <script src="https://cdn.bootcss.com/ace/1.2.9/theme-chrome.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script>
+        var editor = ace.edit("editor");
+        editor.session.setMode("ace/mode/c_cpp");
+        editor.setTheme("ace/theme/chrome");
+        editor.setAutoScrollEditorIntoView(true);
+        document.getElementById('editor').style.fontSize = '14px';
+        $(document).ready(function () {
+            s = $("select");
+            s.val(s.attr('id'));
+            switch (s.val()) {
+                case "C":
+                    editor.session.setMode("ace/mode/c_cpp");
+                    break;
+                case "C++":
+                    editor.session.setMode("ace/mode/c_cpp");
+                    break;
+                case  "Java":
+                    editor.session.setMode("ace/mode/java");
+                    break;
+            }
+            $s.change(function () {
+                switch ($(this).val()) {
+                    case "C":
+                        editor.session.setMode("ace/mode/c_cpp");
+                        break;
+                    case "C++":
+                        editor.session.setMode("ace/mode/c_cpp");
+                        break;
+                    case  "Java":
+                        editor.session.setMode("ace/mode/java");
+                        break;
+                }
+            });
+        });
+
+        function submitEncode() {
+            var form = document.getElementById('submit_form');
+            form.source_code.value = editor.getValue();
+        }
+    </script>
+{% endblock %}

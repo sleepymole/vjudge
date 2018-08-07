@@ -22,7 +22,7 @@ def submit():
         abort(403)
     contest_id = form.contest_id.data
     problem_id = form.problem_id.data
-    c = Contest.query.get(int(contest_id)).first()
+    c = Contest.query.get(int(contest_id))
     result = c.get_ori_problem(problem_id)
     if result is None:
         abort(404)
@@ -33,8 +33,7 @@ def submit():
     code = form.source_code.data
     if len(code) < 50 or len(code) > 65536:
         flash('Make sure your code length is longer than 50 and not exceed 65536 Bytes.')
-        # TODO
-        return redirect(url_for('.problem', oj_name=oj_name, problem_id=problem_id))
+        return redirect(url_for('.problem', contest_id=contest_id, problem_id=problem_id))
     share = form.share.data
     max_seq = db.session.query(func.max(ContestSubmission.seq)).first()[0] or 0
     submission = ContestSubmission(user_id=current_user.id, seq=max_seq + 1, contest_id=contest_id, oj_name=oj_name,
@@ -42,7 +41,7 @@ def submit():
     db.session.add(submission)
     db.session.commit()
     tasks.submit_problem.delay(submission.id, in_contest=True)
-    return redirect(url_for('.status'))
+    return redirect(url_for('main.status'))
 
 
 @contest.route('/<contest_id>/problem/<problem_id>')
@@ -63,13 +62,13 @@ def problem(contest_id, problem_id):
     source_code = ''
     language = 'C++'
     if current_user.is_authenticated:
-        res = db.session.query(Submission.source_code.label('code'), Submission.language.label('lang')). \
-            filter_by(user_id=current_user.id, oj_name=oj_name, problem_id=problem_id).order_by(
-            Submission.id.desc()).first()
+        res = db.session.query(Submission.source_code.label('code'), Submission.language.label('lang')).filter_by(
+            user_id=current_user.id, oj_name=oj_name, problem_id=problem_id).order_by(Submission.id.desc()).first()
         if res:
             source_code = res.code
             language = res.lang
-    return render_template('problem.html', problem=problem, form=form, source_code=source_code, language=language)
+    return render_template('contest_problem.html', problem=problem, form=form, source_code=source_code,
+                           language=language, contest=c)
 
 
 @contest.route('/<contest_id>/problem')

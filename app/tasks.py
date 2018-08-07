@@ -37,8 +37,8 @@ def submit_problem(self, sid, in_contest=False):
     if data.get('status') != 'success':
         submission.verdict = 'Submit Failed'
     submission.run_id = data.get('id')
-    refresh_submit_status.delay(sid)
     db.session.commit()
+    refresh_submit_status.delay(sid, in_contest)
 
 
 @celery.task(bind=True, default_retry_delay=1)
