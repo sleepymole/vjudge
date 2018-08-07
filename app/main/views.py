@@ -206,7 +206,6 @@ def edit_problem(oj_name, problem_id):
 @permission_required(Permission.MODERATE)
 def refresh_problem(oj_name, problem_id):
     tasks.refresh_problem.delay(oj_name=oj_name, problem_id=problem_id)
-    return ''
 
 
 @main.route('/submit', methods=['POST'])

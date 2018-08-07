@@ -16,9 +16,13 @@ class Config(object):
             'task': 'update_problem_all',
             'schedule': timedelta(hours=1)
         },
+        'scan_unfinished_submission': {
+            'task': 'scan_unfinished_submission',
+            'schedule': timedelta(minutes=10)
+        }
     }
-    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/0'
-    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/0'
+    CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/1'
+    CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/1'
     VJUDGE_REMOTE_URL = os.environ.get('VJUDGE_REMOTE_URL') or 'http://localhost:5000'
 
 

@@ -2,7 +2,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask_login import UserMixin, AnonymousUserMixin
 from flask import current_app
-from datetime import datetime
+from datetime import datetime, timezone
 from . import db, login_manager
 
 
@@ -197,3 +197,38 @@ class Problem(db.Model):
 
     def __repr__(self):
         return '<Problem {} {}: {}>'.format(self.oj_name, self.problem_id, self.title)
+
+
+class Contests(db.Model):
+    __tablename__ = 'contests'
+    id = db.Column(db.Integer, primary_key=True)
+    oj_name = db.Column(db.String, nullable=False)
+    site = db.Column(db.String, nullable=False)
+    contest_id = db.Column(db.String, nullable=False)
+    problems = db.Column(db.String, default='[]')
+    title = db.Column(db.String, default='')
+    public = db.Column(db.Boolean, default=False)
+    status = db.Column(db.String, default='Pending')
+    start_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
+    end_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
+
+
+class ContestSubmission(db.Model):
+    __tablename__ = 'contest_submissions'
+    id = db.Column(db.Integer, primary_key=True)
+    seq = db.Column(db.Integer, nullable=False)
+    contest_id = db.Column(db.String, nullable=False)
+    oj_name = db.Column(db.String, nullable=False)
+    problem_id = db.Column(db.String, nullable=False)
+    language = db.Column(db.String, nullable=False)
+    source_code = db.Column(db.String, nullable=False)
+    share = db.Column(db.Boolean, default=False)
+    run_id = db.Column(db.String)
+    verdict = db.Column(db.String, default='Queuing')
+    exe_time = db.Column(db.Integer, default=0)
+    exe_mem = db.Column(db.Integer, default=0)
+    time_stamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return (f'<ContestSubmission(id={self.run_id}, user_id={self.user_id}, oj_name={self.oj_name}, '
+                f'problem_id={self.problem_id} verdict={self.verdict})>')
