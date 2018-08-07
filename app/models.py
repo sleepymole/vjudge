@@ -196,21 +196,21 @@ class Problem(db.Model):
                                   backref='problem', lazy='dynamic')
 
     def __repr__(self):
-        return '<Problem {} {}: {}>'.format(self.oj_name, self.problem_id, self.title)
+        return f'<Problem(oj_name={self.oj_name}, problem_id{self.problem_id}, {self.title})>'
 
 
-class Contests(db.Model):
+class Contest(db.Model):
     __tablename__ = 'contests'
     id = db.Column(db.Integer, primary_key=True)
-    oj_name = db.Column(db.String, nullable=False)
-    site = db.Column(db.String, nullable=False)
-    contest_id = db.Column(db.String, nullable=False)
     problems = db.Column(db.String, default='[]')
     title = db.Column(db.String, default='')
     public = db.Column(db.Boolean, default=False)
     status = db.Column(db.String, default='Pending')
     start_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
     end_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
+
+    def __repr__(self):
+        return f'<Contest(id={self.id}, title={self.title})>'
 
 
 class ContestSubmission(db.Model):
