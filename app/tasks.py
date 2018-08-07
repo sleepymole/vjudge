@@ -155,7 +155,8 @@ def refresh_contest_info(self, contest_id):
         try:
             s.post(url, timeout=10)
         except requests.exceptions.RequestException:
-            return
+            pass
+        return
     contest_data = r.json()['contest']
     problems = r.json()['problems']
     contest.title = contest_data.get('title', '')

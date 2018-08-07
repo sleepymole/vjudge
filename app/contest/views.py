@@ -8,6 +8,11 @@ from .. import tasks
 from ..models import db, Problem, Submission, Contest, ContestSubmission
 
 
+@contest.route('/')
+def index():
+    return render_template('index.html')
+
+
 @contest.route('/submit/', methods=['POST'])
 @login_required
 def submit():
