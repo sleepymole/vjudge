@@ -11,6 +11,7 @@ class Config(object):
     BOOTSTRAP_SERVE_LOCAL = True
     FLASKY_ADMIN = 'admin'
     FLASKY_FOLLOWERS_PER_PAGE = 20
+    ENABLE_UTC = True
     CELERYBEAT_SCHEDULE = {
         'update-problems': {
             'task': 'update_problem_all',
@@ -19,6 +20,10 @@ class Config(object):
         'scan_unfinished_submission': {
             'task': 'scan_unfinished_submission',
             'schedule': timedelta(minutes=10)
+        },
+        'refresh_recent_contest': {
+            'task': 'refresh_recent_contest',
+            'schedule': timedelta(hours=1)
         }
     }
     CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL') or 'redis://localhost:6379/1'

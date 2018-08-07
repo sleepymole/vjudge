@@ -1,10 +1,13 @@
+import json
+import re
+from datetime import datetime, timedelta
+
 import requests
 from sqlalchemy import or_
-from .models import db, Submission, ContestSubmission, Problem
-from . import celery
-from config import Config
 
-from datetime import datetime, timedelta
+from config import Config
+from . import celery
+from .models import db, Submission, ContestSubmission, Problem, Contest
 
 BASE_URL = Config.VJUDGE_REMOTE_URL
 
@@ -131,6 +134,102 @@ def scan_unfinished_submission():
             refresh_submit_status.delay(submission.id, True)
         else:
             submit_problem.delay(submission.id, True)
+
+
+@celery.task(bind=True, name='refresh_contest_info')
+def refresh_contest_info(self, contest_id):
+    contest = Contest.query.get(int(contest_id))
+    if contest is None or not contest.is_clone:
+        return
+    res = re.match(r'^(.*?)_ct_([0-9]+)$', contest.clone_name)
+    if not res:
+        return
+    site, cid = res.groups()
+    url = f'{BASE_URL}/contests/{site}/{cid}'
+    s = requests.session()
+    try:
+        r = s.get(url, timeout=10)
+    except requests.exceptions.RequestException as exc:
+        raise self.retry(exc=exc, countdown=30)
+    if 'error' in r.json():
+        try:
+            s.post(url, timeout=10)
+        except requests.exceptions.RequestException:
+            return
+    contest_data = r.json()['contest']
+    problems = r.json()['problems']
+    contest.title = contest_data.get('title', '')
+    contest.public = contest_data.get('public', False)
+    contest.status = contest_data.get('status', 'Pending')
+    start_time = contest_data.get('start_time', 0)
+    end_time = contest_data.get('end_time', 0)
+    contest.start_time = datetime.fromtimestamp(start_time)
+    contest.end_time = datetime.fromtimestamp(end_time)
+    problem_list = []
+    for p in problems:
+        oj_name = p['oj_name']
+        problem_id = p['problem_id']
+        problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first() or Problem()
+        for attr in p:
+            if attr == 'last_update':
+                problem.last_update = datetime.fromtimestamp(p[attr])
+            elif hasattr(problem, attr):
+                value = p[attr]
+                if value:
+                    setattr(problem, attr, value)
+        db.session.add(problem)
+        problem_list.append((problem.problem_id, problem.oj_name, problem.problem_id))
+        contest.problems = json.dumps(problem_list)
+    db.session.add(contest)
+    db.session.commit()
+    if contest.problems == '[]':
+        if datetime.utcnow() - contest.start_time < timedelta(minutes=10):
+            raise self.retry(max_retries=60, countdown=60)
+    elif contest.start_time < datetime.utcnow() < contest.end_time:
+        raise self.retry(max_retries=12, countdown=5)
+
+
+@celery.task(bind=True, name='refresh_recent_contest')
+def refresh_recent_contest(self):
+    url = f'{BASE_URL}/contests/hdu'
+    s = requests.session()
+    try:
+        r = s.get(url, timeout=10)
+    except requests.exceptions.RequestException as exc:
+        raise self.retry(exc=exc, countdown=5)
+    contests = r.json()['contests']
+    contests.reverse()
+    for contest in contests:
+        contest_id = contest.get('contest_id')
+        if contest_id is None:
+            continue
+        title = contest.get('title', '')
+        status = contest.get('status', 'Pending')
+        public = contest.get('public', False)
+        site = contest.get('site', '')
+        start_time = contest.get('start_time', 0)
+        end_time = contest.get('end_time', 0)
+        oj_name = f'{site}_ct_{contest_id}'
+        contest = Contest.query.filter_by(is_clone=True, clone_name=oj_name).first()
+        if contest is None:
+            contest = Contest()
+            contest.is_clone = True
+            contest.clone_name = oj_name
+            contest.title = title
+            contest.public = public
+            contest.status = status
+            contest.start_time = datetime.fromtimestamp(start_time)
+            contest.end_time = datetime.fromtimestamp(end_time)
+            db.session.add(contest)
+        else:
+            contest.clone_name = oj_name
+            contest.title = title
+            contest.public = public
+            contest.status = status
+        db.session.commit()
+    contests = Contest.query.all()
+    for contest in contests:
+        refresh_contest_info.delay(contest.id)
 
 
 @celery.task(name='update_problem_all')

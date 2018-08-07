@@ -1,8 +1,11 @@
-from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from flask_login import UserMixin, AnonymousUserMixin
-from flask import current_app
+import json
 from datetime import datetime, timezone
+
+from flask import current_app
+from flask_login import UserMixin, AnonymousUserMixin
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from . import db, login_manager
 
 
@@ -203,11 +206,30 @@ class Contest(db.Model):
     __tablename__ = 'contests'
     id = db.Column(db.Integer, primary_key=True)
     problems = db.Column(db.String, default='[]')
+    is_clone = db.Column(db.Boolean, default=False)
+    clone_name = db.Column(db.String)
     title = db.Column(db.String, default='')
     public = db.Column(db.Boolean, default=False)
     status = db.Column(db.String, default='Pending')
     start_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
     end_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
+
+    def __init__(self):
+        super().__init__()
+        self._ori_problems = None
+
+    def get_ori_problem(self, problem_id):
+        if self._ori_problems is None:
+            try:
+                problem_list = json.loads(self.problems)
+            except json.JSONDecodeError:
+                return
+            if not isinstance(problem_list, list):
+                return
+            self._ori_problems = {}
+            for problem in problem_list:
+                self._ori_problems[problem[0]] = (problem[1], problem[2])
+        return self._ori_problems.get(problem_id)
 
     def __repr__(self):
         return f'<Contest(id={self.id}, title={self.title})>'
@@ -216,6 +238,7 @@ class Contest(db.Model):
 class ContestSubmission(db.Model):
     __tablename__ = 'contest_submissions'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
     seq = db.Column(db.Integer, nullable=False)
     contest_id = db.Column(db.String, nullable=False)
     oj_name = db.Column(db.String, nullable=False)

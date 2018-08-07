@@ -1,12 +1,13 @@
+from bs4 import BeautifulSoup
 from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import and_
-from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm, EditProblemForm
-from ..models import db, User, Role, Permission, Problem, Submission
-from ..decorators import admin_required, permission_required
+
 from . import main
+from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm, EditProblemForm
 from .. import tasks
-from bs4 import BeautifulSoup
+from ..decorators import admin_required, permission_required
+from ..models import db, User, Role, Permission, Problem, Submission
 
 
 @main.route('/')
@@ -206,6 +207,7 @@ def edit_problem(oj_name, problem_id):
 @permission_required(Permission.MODERATE)
 def refresh_problem(oj_name, problem_id):
     tasks.refresh_problem.delay(oj_name=oj_name, problem_id=problem_id)
+    return ''
 
 
 @main.route('/submit', methods=['POST'])

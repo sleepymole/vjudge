@@ -1,9 +1,10 @@
-from flask_sqlalchemy import SQLAlchemy
+from celery import Celery
+from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager
 from flask_moment import Moment
-from flask import Flask
-from celery import Celery
+from flask_sqlalchemy import SQLAlchemy
+
 from config import config, Config
 
 bootstrap = Bootstrap()
@@ -30,4 +31,6 @@ def create_app(config_name):
     app.register_blueprint(main_blueprint)
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
+    from .contest import contest as contest_blueprint
+    app.register_blueprint(contest_blueprint, url_prefix='/contest')
     return app
