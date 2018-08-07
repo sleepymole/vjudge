@@ -214,11 +214,9 @@ class Contest(db.Model):
     start_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
     end_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
 
-    def __init__(self):
-        super().__init__()
-        self._ori_problems = None
-
     def get_ori_problem(self, problem_id):
+        if not hasattr(self, '_ori_problems'):
+            self._ori_problems = None
         if self._ori_problems is None:
             try:
                 problem_list = json.loads(self.problems)

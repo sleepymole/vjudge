@@ -47,7 +47,9 @@ def submit():
 
 @contest.route('/<contest_id>/problem/<problem_id>')
 def problem(contest_id, problem_id):
-    c = Contest.query.get(int(contest_id)).first()
+    c = Contest.query.get(int(contest_id))
+    if c is None:
+        abort(404)
     result = c.get_ori_problem(problem_id)
     if result is None:
         abort(404)
@@ -56,7 +58,7 @@ def problem(contest_id, problem_id):
     if problem is None:
         abort(404)
     form = SubmitProblemForm()
-    form.oj_name.data = oj_name
+    form.contest_id.data = contest_id
     form.problem_id.data = problem_id
     source_code = ''
     language = 'C++'

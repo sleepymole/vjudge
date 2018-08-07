@@ -184,7 +184,7 @@ def refresh_contest_info(self, contest_id):
     db.session.add(contest)
     db.session.commit()
     if contest.problems == '[]':
-        if datetime.utcnow() - contest.start_time < timedelta(minutes=10):
+        if contest.start_time - datetime.utcnow() < timedelta(minutes=10):
             raise self.retry(max_retries=60, countdown=60)
     elif contest.start_time < datetime.utcnow() < contest.end_time:
         raise self.retry(max_retries=12, countdown=5)
