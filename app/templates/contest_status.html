@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}VJudge - Status{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block navbar %}
+    <div class="navbar navbar-inverse" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">Home</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.problem_list', contest_id=contest.id) }}">Problem</a></li>
+                </ul>
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.status', contest_id=contest.id) }}">Status</a></li>
+                </ul>
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.rank_list', contest_id=contest.id) }}">Ranklist</a></li>
+                </ul>
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.index') }}">Contest</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    {% if current_user.is_authenticated %}
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <img src="{{ url_for('static', filename='avatar/small.png') }}">
+                                {{ current_user.username }}<b
+                                    class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{{ url_for('main.user', username=current_user.username) }}">Profile</a>
+                                </li>
+                                <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
+                                <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}}
+
+{% block page_content %}
+    <div class="page-header">
+        <h1>Status</h1>
+    </div>
+
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Problem</th>
+            <th>Lang</th>
+            <th>Verdict</th>
+            <th>Time</th>
+            <th>Memory</th>
+            <th>Submit time</th>
+        </tr>
+        </thead>
+        {% for submission in submissions %}
+            <tr class="align-middle align-text-top">
+                <td>{{ submission.data.id }}</td>
+                <td><a href="{{ url_for('main.user', username = submission.username) }}">
+                    <img class="img-rounded" src="{{ url_for('static', filename='avatar/middle.png') }}">
+                    {{ submission.username }}
+                </a></td>
+                <td>
+                    <a href="{{ url_for('contest.problem',contest_id=submission.data.contest_id,problem_id=submission.data.problem_id) }}">{{ submission.data.problem_id }}</a>
+                </td>
+                <td>
+                    {% if current_user.is_authenticated and (submission.data.share or current_user.id == submission.data.user_id
+            or current_user.can(Permission.MODERATE)) %}
+                        <a href="{{ url_for('contest.source_code',contest_id=submission.data.contest_id, id=submission.data.seq ) }}">{{ submission.data.language }}</a>
+                    {% else %}
+                        {{ submission.data.language }}
+                    {% endif %}
+                </td>
+                <td class="{{ submission.data.verdict.replace(' ','-').lower() }} verdict">{{ submission.data.verdict }}</td>
+                <td>{{ submission.data.exe_time }}</td>
+                <td>{{ submission.data.exe_mem }}</td>
+                <td>{{ moment(submission.data.time_stamp).format('YYYY-MM-DD HH:mm:ss') }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <div class="pagination">
+        {{ macros.pagination_widget(pagination, endpoint,contest_id=contest.id) }}
+    </div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+
+{% endblock %}

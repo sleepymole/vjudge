@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}VJudge - Problem list{% endblock %}
+
+{% block navbar %}
+    <div class="navbar navbar-inverse" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('main.index') }}">Home</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.problem_list', contest_id=contest.id) }}">Problem</a></li>
+                </ul>
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.status', contest_id=contest.id) }}">Status</a></li>
+                </ul>
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.rank_list', contest_id=contest.id) }}">Ranklist</a></li>
+                </ul>
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('contest.index') }}">Contest</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    {% if current_user.is_authenticated %}
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <img src="{{ url_for('static', filename='avatar/small.png') }}">
+                                {{ current_user.username }}<b
+                                    class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{{ url_for('main.user', username=current_user.username) }}">Profile</a>
+                                </li>
+                                <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
+                                <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>{{ contest.title }}</h1>
+</div>
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>Problem</th>
+        <th>Name</th>
+        <th>Last update</th>
+    </tr>
+    </thead>
+    {% for problem in problems %}
+    <tr>
+        <td>
+            <a href="{{ url_for('.problem',contest_id=contest.id,problem_id=problem.problem_id) }}">
+                {{ problem.problem_id }}</a>
+        </td>
+        <td>
+            <a href="{{ url_for('.problem',contest_id=contest.id,problem_id=problem.problem_id) }}">
+                {% autoescape false %}{{ problem.title }}{% endautoescape %}</a>&nbsp;
+            {% if current_user.can(Permission.MODERATE) %}
+                <button type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-refresh problem-refresh"
+                  id="{{ problem.oj_name }}-{{ problem.problem_id }}"></span>
+                </button>
+            {% endif %}
+        </td>
+        <td>{{ moment(problem.last_update).format('YYYY-MM-DD HH:mm') }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<div class="pagination">
+    {% if oj %}
+        {{ macros.pagination_widget(pagination, endpoint, contest_id=contest.id) }}
+    {% else %}
+        {{ macros.pagination_widget(pagination, endpoint, contest_id=contest.id) }}
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $(".problem-refresh").click(function () {
+                var prob = $(this).attr('id').split('-');
+                var url = 'refresh-problem/' + prob[0] + '/' + prob[1];
+                $.post(url);
+            });
+            s = $("select");
+            s.val(s.attr('id'));
+        });
+    </script>
+{% endblock %}

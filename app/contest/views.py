@@ -1,16 +1,22 @@
+from datetime import datetime
+
 from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
-from sqlalchemy import and_, func
+from sqlalchemy import func
 
 from . import contest
 from .forms import SubmitProblemForm
 from .. import tasks
-from ..models import db, Problem, Submission, Contest, ContestSubmission
+from ..models import db, Problem, Contest, ContestSubmission, User, Permission
 
 
 @contest.route('/')
 def index():
-    return render_template('index.html')
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
+    pagination = Contest.query.order_by(Contest.id.desc()).paginate(page, per_page=per_page, error_out=False)
+    return render_template('contest_list.html', contests=pagination.items,
+                           endpoint='.index', pagination=pagination)
 
 
 @contest.route('/submit/', methods=['POST'])
@@ -41,7 +47,7 @@ def submit():
     db.session.add(submission)
     db.session.commit()
     tasks.submit_problem.delay(submission.id, in_contest=True)
-    return redirect(url_for('main.status'))
+    return redirect(url_for('.status', contest_id=submission.contest_id))
 
 
 @contest.route('/<contest_id>/problem/<problem_id>')
@@ -62,8 +68,10 @@ def problem(contest_id, problem_id):
     source_code = ''
     language = 'C++'
     if current_user.is_authenticated:
-        res = db.session.query(Submission.source_code.label('code'), Submission.language.label('lang')).filter_by(
-            user_id=current_user.id, oj_name=oj_name, problem_id=problem_id).order_by(Submission.id.desc()).first()
+        res = db.session.query(ContestSubmission.source_code.label('code'),
+                               ContestSubmission.language.label('lang')).filter_by(
+            user_id=current_user.id, oj_name=oj_name, problem_id=real_pid).order_by(
+            ContestSubmission.id.desc()).first()
         if res:
             source_code = res.code
             language = res.lang
@@ -73,92 +81,65 @@ def problem(contest_id, problem_id):
 
 @contest.route('/<contest_id>/problem')
 def problem_list(contest_id):
-    oj_name = request.args.get('oj', None)
-    problem_id = request.args.get('problem_id', None)
+    c = Contest.query.get(int(contest_id))
+    if c is None:
+        abort(404)
     page = request.args.get('page', 1, type=int)
     per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
-    kwargs = dict(request.args)
-    for k in kwargs:
-        kwargs[k] = kwargs[k][0]
-    need_redirect = False
-    if oj_name == 'all':
-        kwargs.pop('oj')
-        need_redirect = True
-    if problem_id == '':
-        kwargs.pop('problem_id')
-        need_redirect = True
-    if need_redirect:
-        return redirect(url_for('.problem_list', **kwargs))
-    pagination = Problem.query.filter(
-        and_(Problem.oj_name.like(oj_name or '%'),
-             Problem.problem_id.like(problem_id or '%'))). \
+    pagination = Problem.query.filter_by(oj_name=c.clone_name). \
         paginate(page, per_page=per_page, error_out=False)
-    return render_template('problem_list.html', problems=pagination.items, endpoint='.problem_list',
-                           pagination=pagination, oj=oj_name)
+    return render_template('contest_problem_list.html', problems=pagination.items, contest=c,
+                           endpoint='.problem_list', pagination=pagination)
 
-# @contest.route('/status')
-# def status():
-#     id = request.args.get('id', None, type=int)
-#     username = request.args.get('user')
-#     oj_name = request.args.get('oj', None)
-#     if oj_name == 'all':
-#         oj_name = None
-#     problem_id = request.args.get('problem_id', None)
-#     verdict = request.args.get('verdict', None)
-#     page = request.args.get('page', None, type=int)
-#     query = request.args.get('query', None)
-#
-#     query_dict = dict(id=id, username=username, oj_name=oj_name,
-#                       problem_id=problem_id, verdict=verdict, page=page)
-#     if query:
-#         words = query.split()
-#         for word in words:
-#             if User.query.filter_by(username=word).first():
-#                 query_dict['username'] = word
-#             elif Problem.query.filter_by(problem_id=word).first():
-#                 query_dict['problem_id'] = word
-#             elif word.lower() == 'accepted':
-#                 query_dict['verdict'] = 'Accepted'
-#             elif word.lower() in ('scu', 'hdu'):
-#                 query_dict['oj_name'] = word.lower()
-#
-#     query_args = {}
-#     for k in query_dict:
-#         if query_dict[k]:
-#             query_args[k] = query_dict[k]
-#
-#     kwargs = query_args.copy()
-#     if 'username' in kwargs:
-#         kwargs['user'] = kwargs.pop('username')
-#     if 'oj_name' in kwargs:
-#         kwargs['oj'] = kwargs.pop('oj_name')
-#     if 'page' in kwargs:
-#         kwargs['page'] = str(kwargs['page'])
-#
-#     if len(kwargs) != len(request.args):
-#         return redirect(url_for('.status', **kwargs))
-#     for k in kwargs:
-#         if k not in request.args or kwargs[k] != request.args.get(k):
-#             return redirect(url_for('.status', **kwargs))
-#
-#     page = page if page else 1
-#     if 'page' in query_args:
-#         query_args.pop('page')
-#     per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
-#
-#     if 'username' in query_args:
-#         username = query_args.pop('username')
-#         query_args['user_id'] = db.session.query(User.id.label('user_id')). \
-#             filter_by(username=username).first().user_id
-#
-#     pagination = Submission.query.filter_by(**query_args).order_by(Submission.id.desc()). \
-#         paginate(page, per_page=per_page, error_out=False)
-#     submissions = [{'username': item.user.username, 'data': item} for item in pagination.items]
-#
-#     return render_template('status.html', submissions=submissions, endpoint='.status',
-#                            pagination=pagination, oj=oj_name or 'all')
-#
-#
+
+@contest.route('/<contest_id>/status')
+def status(contest_id):
+    c = Contest.query.get(int(contest_id))
+    if c is None:
+        abort(404)
+    id = request.args.get('id', None, type=int)
+    username = request.args.get('user')
+    verdict = request.args.get('verdict', None)
+    page = request.args.get('page', None, type=int)
+
+    query_dict = dict(seq=id, username=username, verdict=verdict, page=page)
+
+    query_args = {}
+    for k in query_dict:
+        if query_dict[k] is not None:
+            query_args[k] = query_dict[k]
+    query_args['contest_id'] = contest_id
+
+    page = page if page else 1
+    if 'page' in query_args:
+        query_args.pop('page')
+    per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
+
+    if 'username' in query_args:
+        username = query_args.pop('username')
+        query_args['user_id'] = db.session.query(
+            User.id.label('user_id')).filter_by(username=username).first().user_id
+
+    pagination = ContestSubmission.query.filter_by(**query_args).order_by(
+        ContestSubmission.id.desc()).paginate(page, per_page=per_page, error_out=False)
+    submissions = []
+    for item in pagination.items:
+        u = User.query.get(item.user_id)
+        if u is not None:
+            name = u.username
+        else:
+            name = ''
+        submissions.append({'username': name, 'data': item})
+
+    return render_template('contest_status.html', submissions=submissions, contest=c,
+                           endpoint='.status', pagination=pagination)
+
+
+@contest.route('/<contest_id>/ranklist')
+def rank_list(contest_id):
+    return ''
+
+
 # @contest.route('/ranklist')
 # def rank_list():
 #     username = request.args.get('user')
@@ -186,20 +167,28 @@ def problem_list(contest_id):
 #     return render_template('rank_list.html', users=users, endpoint='.rank_list', pagination=pagination)
 #
 #
-# @contest.route('/source')
-# @login_required
-# def source_code():
-#     run_id = request.args.get('id', None, type=int)
-#     if not run_id:
-#         abort(404)
-#     submission = Submission.query.get(run_id)
-#     if not submission:
-#         abort(404)
-#     if not current_user.can(Permission.MODERATE) and \
-#             not submission.share and submission.user_id != current_user.id:
-#         abort(403)
-#     username = submission.user.username
-#     language = 'c_cpp'
-#     if submission.language == 'Java':
-#         language = 'java'
-#     return render_template('source_code.html', submission=submission, username=username, language=language)
+@contest.route('/<contest_id>/source')
+@login_required
+def source_code(contest_id):
+    c = Contest.query.get(int(contest_id))
+    if c is None:
+        abort(404)
+    run_id = request.args.get('id', None, type=int)
+    if not run_id:
+        abort(404)
+    submission = ContestSubmission.query.filter_by(contest_id=c.id, seq=run_id).first()
+    if not submission:
+        abort(404)
+    if (not current_user.can(Permission.ADMINISTER) and
+            not submission.share and submission.user_id != current_user.id):
+        abort(403)
+    if (not current_user.can(Permission.ADMINISTER) and
+            submission.share and datetime.utcnow() < c.end_time):
+        abort(403)
+    u = User.query.get(submission.user_id)
+    username = u.username if u else ''
+    language = 'c_cpp'
+    if submission.language == 'Java':
+        language = 'java'
+    return render_template('contest_source_code.html', contest=c, submission=submission, username=username,
+                           language=language)
