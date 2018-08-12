@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from flask import current_app, render_template, request, flash, redirect, abort, url_for
+from flask import current_app, render_template, request, flash, redirect, abort, url_for, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import and_, or_
 
@@ -218,7 +218,7 @@ def edit_problem(oj_name, problem_id):
 @permission_required(Permission.MODERATE)
 def refresh_problem(oj_name, problem_id):
     tasks.refresh_problem.delay(oj_name=oj_name, problem_id=problem_id)
-    return ''
+    return jsonify({'status': 'success'})
 
 
 @main.route('/submit', methods=['POST'])
