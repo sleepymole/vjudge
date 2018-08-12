@@ -31,6 +31,12 @@ def submit():
     contest_id = form.contest_id.data
     problem_id = form.problem_id.data
     c = Contest.query.get(int(contest_id))
+    if datetime.utcnow() < c.start_time:
+        flash('Contest has not begin yet.')
+        return redirect(url_for('.problem', contest_id=contest_id, problem_id=problem_id))
+    if datetime.utcnow() > c.end_time:
+        flash('Contest is over.')
+        return redirect(url_for('.problem', contest_id=contest_id, problem_id=problem_id))
     result = c.get_ori_problem(problem_id)
     if result is None:
         abort(404)
