@@ -39,10 +39,6 @@
         {% endfor %}
     </table>
     <div class="pagination">
-        {% if oj %}
-            {{ macros.pagination_widget(pagination, endpoint) }}
-        {% else %}
-            {{ macros.pagination_widget(pagination, endpoint) }}
-        {% endif %}
+        {{ macros.pagination_widget(pagination, endpoint) }}
     </div>
 {% endblock %}

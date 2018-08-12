@@ -1,10 +1,5 @@
-import logging
-from manage import app, db, Role, User
 from config import Config
-
-logging.basicConfig(level=logging.INFO)
-
-app.app_context().push()
+from manage import db, Role, User
 
 
 def init_db():

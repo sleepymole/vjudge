@@ -1,0 +1,61 @@
+{% extends "contest/base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}VJudge - Problem list{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>{{ contest.title }}</h1>
+</div>
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>Problem</th>
+        <th>Name</th>
+        <th>Last update</th>
+    </tr>
+    </thead>
+    {% for problem in problems %}
+    <tr>
+        <td>
+            <a href="{{ url_for('.problem',contest_id=contest.id,problem_id=problem.problem_id) }}">
+                {{ problem.problem_id }}</a>
+        </td>
+        <td>
+            <a href="{{ url_for('.problem',contest_id=contest.id,problem_id=problem.problem_id) }}">
+                {% autoescape false %}{{ problem.title }}{% endautoescape %}</a>&nbsp;
+            {% if current_user.can(Permission.MODERATE) %}
+                <button type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-refresh problem-refresh"
+                  id="{{ problem.oj_name }}-{{ problem.problem_id }}"></span>
+                </button>
+            {% endif %}
+        </td>
+        <td>{{ moment(problem.last_update).format('YYYY-MM-DD HH:mm') }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<div class="pagination">
+    {{ macros.pagination_widget(pagination, endpoint, contest_id=contest.id) }}
+</div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $(".problem-refresh").click(function () {
+                var prob = $(this).attr('id').split('-');
+                var url = 'refresh-problem/' + prob[0] + '/' + prob[1];
+                $.post(url);
+            });
+            s = $("select");
+            s.val(s.attr('id'));
+        });
+    </script>
+{% endblock %}

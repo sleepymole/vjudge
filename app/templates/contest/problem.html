@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "contest/base.html" %}
 {% block title %}VJudge - {{ contest.title }}-{{ problem.problem_id }}{% endblock %}
 
 {% block head %}
@@ -6,54 +6,6 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
 {% endblock %}
-
-{% block navbar %}
-    <div class="navbar navbar-inverse" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="{{ url_for('main.index') }}">Home</a>
-            </div>
-            <div class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                    <li><a href="{{ url_for('contest.problem_list', contest_id=contest.id) }}">Problem</a></li>
-                </ul>
-                <ul class="nav navbar-nav">
-                    <li><a href="{{ url_for('contest.status', contest_id=contest.id) }}">Status</a></li>
-                </ul>
-                <ul class="nav navbar-nav">
-                    <li><a href="{{ url_for('contest.rank_list', contest_id=contest.id) }}">Ranklist</a></li>
-                </ul>
-                <ul class="nav navbar-nav">
-                    <li><a href="{{ url_for('contest.index') }}">Contest</a></li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    {% if current_user.is_authenticated %}
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                <img src="{{ url_for('static', filename='avatar/small.png') }}">
-                                {{ current_user.username }}<b
-                                    class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="{{ url_for('main.user', username=current_user.username) }}">Profile</a>
-                                </li>
-                                <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
-                                <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </div>
-{% endblock %}}
 
 {% block page_content %}
 <div class="page-header">
@@ -148,10 +100,7 @@
 {% block scripts %}
     {{ super() }}
     <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
-});
-
+    MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
     </script>
     <script type="text/javascript" async
             src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
@@ -161,7 +110,7 @@
     <script src="https://cdn.bootcss.com/ace/1.2.9/theme-chrome.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
     <script>
-        var editor = ace.edit("editor");
+        let editor = ace.edit("editor");
         editor.session.setMode("ace/mode/c_cpp");
         editor.setTheme("ace/theme/chrome");
         editor.setAutoScrollEditorIntoView(true);
@@ -196,7 +145,7 @@
         });
 
         function submitEncode() {
-            var form = document.getElementById('submit_form');
+            let form = document.getElementById('submit_form');
             form.source_code.value = editor.getValue();
         }
     </script>

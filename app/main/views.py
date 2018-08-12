@@ -1,13 +1,15 @@
 from bs4 import BeautifulSoup
 from flask import current_app, render_template, request, flash, redirect, abort, url_for
 from flask_login import login_required, current_user
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, SubmitProblemForm, EditProblemForm
 from .. import tasks
 from ..decorators import admin_required, permission_required
 from ..models import db, User, Role, Permission, Problem, Submission
+
+supported_sites = ['scu', 'hdu']
 
 
 @main.route('/')
@@ -173,10 +175,19 @@ def problem_list():
         need_redirect = True
     if need_redirect:
         return redirect(url_for('.problem_list', **kwargs))
+
+    if oj_name:
+        oj_name_filter = Problem.oj_name == oj_name
+    else:
+        filter_args = []
+        for site in supported_sites:
+            filter_args.append(Problem.oj_name == site)
+        oj_name_filter = or_(*filter_args)
     pagination = Problem.query.filter(
-        and_(Problem.oj_name.like(oj_name or '%'),
-             Problem.problem_id.like(problem_id or '%'))). \
-        paginate(page, per_page=per_page, error_out=False)
+        and_(oj_name_filter, Problem.problem_id.like(problem_id or '%'))).order_by(
+        Problem.oj_name).order_by(Problem.problem_id).paginate(
+        page=page, per_page=per_page, error_out=False)
+
     return render_template('problem_list.html', problems=pagination.items, endpoint='.problem_list',
                            pagination=pagination, oj=oj_name)
 

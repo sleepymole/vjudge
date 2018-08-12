@@ -139,7 +139,7 @@ def scan_unfinished_submission():
 @celery.task(bind=True, name='refresh_contest_info')
 def refresh_contest_info(self, contest_id):
     contest = Contest.query.get(int(contest_id))
-    if contest is None or not contest.is_clone:
+    if not contest or not contest.is_clone:
         return
     res = re.match(r'^(.*?)_ct_([0-9]+)$', contest.clone_name)
     if not res:
@@ -148,15 +148,12 @@ def refresh_contest_info(self, contest_id):
     url = f'{BASE_URL}/contests/{site}/{cid}'
     s = requests.session()
     try:
+        s.post(url, timeout=10)
         r = s.get(url, timeout=10)
     except requests.exceptions.RequestException as exc:
         raise self.retry(exc=exc, countdown=30)
     if 'error' in r.json():
-        try:
-            s.post(url, timeout=10)
-        except requests.exceptions.RequestException:
-            pass
-        return
+        raise self.retry(countdown=30)
     contest_data = r.json()['contest']
     problems = r.json()['problems']
     contest.title = contest_data.get('title', '')
@@ -187,7 +184,7 @@ def refresh_contest_info(self, contest_id):
         if contest.start_time - datetime.utcnow() < timedelta(minutes=10):
             raise self.retry(max_retries=60, countdown=60)
     elif contest.start_time < datetime.utcnow() < contest.end_time:
-        raise self.retry(max_retries=12, countdown=5)
+        raise self.retry(max_retries=12, countdown=5 * 60)
 
 
 @celery.task(bind=True, name='refresh_recent_contest')
