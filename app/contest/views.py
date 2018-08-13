@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from . import contest
 from .forms import SubmitProblemForm
-from .utlis import contest_check
+from .utlis import contest_check, generate_board
 from .. import tasks
 from ..models import db, Problem, Contest, ContestSubmission, User, Permission
 
@@ -50,7 +50,7 @@ def submit():
         flash('Make sure your code length is longer than 50 and not exceed 65536 Bytes.')
         return redirect(url_for('.problem', contest_id=contest_id, problem_id=problem_id))
     share = form.share.data
-    max_seq = db.session.query(func.max(ContestSubmission.seq)).first()[0] or 0
+    max_seq = db.session.query(func.max(ContestSubmission.seq)).filter_by(contest_id=c.id).first()[0] or 0
     submission = ContestSubmission(user_id=current_user.id, seq=max_seq + 1, contest_id=contest_id, oj_name=oj_name,
                                    problem_id=real_pid, language=language, source_code=code, share=share)
     db.session.add(submission)
@@ -142,7 +142,9 @@ def status(contest_id):
 @contest.route('/<contest_id>/ranklist')
 @contest_check
 def rank_list(contest_id):
-    contest = g.contest
+    board = generate_board()
+    import json
+    print(json.dumps(board, ensure_ascii=False, indent=4))
     return render_template('contest/rank_list.html', contest=contest)
 
 

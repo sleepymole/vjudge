@@ -28,7 +28,7 @@
         </thead>
         {% for submission in submissions %}
             <tr class="align-middle align-text-top">
-                <td>{{ submission.data.id }}</td>
+                <td>{{ submission.data.seq }}</td>
                 <td><a href="{{ url_for('main.user', username = submission.username) }}">
                     <img class="img-rounded" src="{{ url_for('static', filename='avatar/middle.png') }}">
                     {{ submission.username }}

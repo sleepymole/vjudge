@@ -215,8 +215,12 @@ class Contest(db.Model):
     end_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
 
     def get_ori_problem(self, problem_id):
-        if not hasattr(self, '_ori_problems'):
-            self._ori_problems = None
+        ori_problems = self.get_ori_problems()
+        if ori_problems is not None:
+            return ori_problems.get(problem_id)
+
+    def get_ori_problems(self):
+        self._ori_problems = getattr(self, '_ori_problems', None)
         if self._ori_problems is None:
             try:
                 problem_list = json.loads(self.problems)
@@ -227,7 +231,7 @@ class Contest(db.Model):
             self._ori_problems = {}
             for problem in problem_list:
                 self._ori_problems[problem[0]] = (problem[1], problem[2])
-        return self._ori_problems.get(problem_id)
+        return self._ori_problems
 
     def __repr__(self):
         return f'<Contest(id={self.id}, title={self.title})>'
