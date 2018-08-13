@@ -6,6 +6,11 @@ from flask import abort, g
 from ..models import Contest, ContestSubmission, User
 
 
+def strftime(tm):
+    secs = int(tm.total_seconds())
+    return f'{secs//3600}:{secs%3600//60}:{secs%60}'
+
+
 def contest_check(f):
     @wraps(f)
     def decorated_function(contest_id, *args, **kwargs):
@@ -32,7 +37,7 @@ def generate_board():
         def __lt__(self, other):
             if self.solved != other.solved:
                 return self.solved > other.solved
-            return self.penalty < other.solved
+            return self.penalty < other.penalty
 
         def __eq__(self, other):
             return self.solved == other.solved and self.penalty == other.penalty
@@ -42,17 +47,21 @@ def generate_board():
     submissions = ContestSubmission.query.all()
     for submission in submissions:
         record = records.get(submission.user_id, Record(user_id=submission.user_id))
+        records[submission.user_id] = record
         ac_tm, wa_cnt = getattr(record, submission.problem_id, (None, 0))
         if ac_tm is not None:
             continue
         if submission.verdict in ('Queuing', 'Being Judged', 'Submit Failed', 'Compilation Error'):
             continue
         if submission.verdict == 'Accepted':
-            ac_tm = submission.time_stamp - contest.start_time
+            record.solved += 1
+            ac_tm = (submission.time_stamp - contest.start_time)
             record.penalty += ac_tm + wa_cnt * timedelta(minutes=20)
+            ac_tm = strftime(ac_tm)
         else:
             wa_cnt += 1
         setattr(record, submission.problem_id, (ac_tm, wa_cnt))
+        records[submission.user_id] = record
     records = [records[u] for u in records]
     records.sort()
     board = []
@@ -61,11 +70,12 @@ def generate_board():
         username = u.username if u else ''
         data = {
             'username': username,
-            'penalty': record.penalty,
-            'solved': record.solved
+            'penalty': strftime(record.penalty),
+            'solved': record.solved,
+            'problem': []
         }
         problem_list = [pid for pid in contest.get_ori_problems()]
         for pid in problem_list:
-            data[pid] = getattr(record, pid, (None, 0))
+            data['problem'].append((pid, *getattr(record, pid, (None, 0))))
         board.append(data)
     return board

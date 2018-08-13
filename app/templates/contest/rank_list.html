@@ -1,1 +1,39 @@
 {% extends "contest/base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}VJudge - {{ contest.title }} - Ranklist{% endblock %}
+
+{% block page_content %}
+    <div class="page-header">
+        <h1>Ranklist</h1>
+    </div>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>User</th>
+            <th>Solved</th>
+            <th>Penalty</th>
+
+            {% for pid in contest.get_ori_problems() %}
+                <th><a href="{{ url_for('.problem',contest_id=contest.id,problem_id=pid) }}">
+                    {{ pid }}</a>&nbsp;
+                </th>
+            {% endfor %}
+        </tr>
+        </thead>
+        {% for record in board %}
+            <tr>
+                <td><a href="{{ url_for('main.user', username = record.username) }}">
+                    <img class="img-rounded" src="{{ url_for('static', filename='avatar/middle.png') }}">
+                    {{ record.username }}
+                </a></td>
+                <td>{{ record.solved }}</td>
+                <td>{{ record.penalty }}</td>
+                {% for item in record.problem %}
+                    <td>{% if item[1] %}{{ item[1] }}{% endif %}
+                        {% if item[1] and item[2] %}<br>{% endif %}
+                        {% if item[2] %}-{{ item[2] }}{% endif %}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

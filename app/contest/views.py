@@ -142,10 +142,9 @@ def status(contest_id):
 @contest.route('/<contest_id>/ranklist')
 @contest_check
 def rank_list(contest_id):
+    contest = g.contest
     board = generate_board()
-    import json
-    print(json.dumps(board, ensure_ascii=False, indent=4))
-    return render_template('contest/rank_list.html', contest=contest)
+    return render_template('contest/rank_list.html', contest=contest, board=board)
 
 
 @contest.route('/<contest_id>/source')
