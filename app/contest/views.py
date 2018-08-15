@@ -157,7 +157,7 @@ def source_code(contest_id):
     if not submission:
         abort(404)
 
-    if (not current_user.can(Permission.ADMINISTER) and submission.user_id != current_user.user_id and
+    if (not current_user.can(Permission.ADMINISTER) and submission.user_id != current_user.id and
             (datetime.utcnow() < contest.end_time or not current_user.can(Permission.MODERATE)
              and not submission.share)):
         abort(403)
