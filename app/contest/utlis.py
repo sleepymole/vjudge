@@ -44,7 +44,7 @@ def generate_board():
 
     contest = g.contest
     records = {}
-    submissions = ContestSubmission.query.all()
+    submissions = ContestSubmission.query.filter_by(contest_id=contest.id).all()
     for submission in submissions:
         record = records.get(submission.user_id, Record(user_id=submission.user_id))
         records[submission.user_id] = record
