@@ -14,6 +14,7 @@ supported_languages = ['C', 'C++', 'Java']
 
 
 @contest.route('/')
+@login_required
 def index():
     page = request.args.get('page', 1, type=int)
     per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
@@ -61,6 +62,7 @@ def submit():
 
 @contest.route('/<contest_id>/problem/<problem_id>')
 @contest_check
+@login_required
 def problem(contest_id, problem_id):
     contest = g.contest
     result = contest.get_ori_problem(problem_id)
@@ -90,6 +92,7 @@ def problem(contest_id, problem_id):
 
 @contest.route('/<contest_id>/problem')
 @contest_check
+@login_required
 def problem_list(contest_id):
     page = request.args.get('page', 1, type=int)
     per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
@@ -102,6 +105,7 @@ def problem_list(contest_id):
 
 @contest.route('/<contest_id>/status')
 @contest_check
+@login_required
 def status(contest_id):
     id = request.args.get('id', None, type=int)
     username = request.args.get('user')
@@ -141,6 +145,7 @@ def status(contest_id):
 
 @contest.route('/<contest_id>/ranklist')
 @contest_check
+@login_required
 def rank_list(contest_id):
     contest = g.contest
     board = generate_board()
