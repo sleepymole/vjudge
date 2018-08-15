@@ -3,7 +3,6 @@ import re
 from datetime import datetime, timedelta
 
 import requests
-from sqlalchemy import or_
 
 from config import Config
 from . import celery
@@ -27,7 +26,7 @@ def submit_problem(self, sid, in_contest=False):
         'source_code': submission.source_code
     }
     try:
-        r = s.post(url, data)
+        r = s.post(url, data, timeout=10)
     except requests.exceptions.RequestException as exc:
         if self.request.retries == self.max_retries:
             submission.verdict = 'Submit Failed'
@@ -116,24 +115,6 @@ def update_problem(self, oj_name, problem_id):
                 setattr(problem, attr, value)
     db.session.add(problem)
     db.session.commit()
-
-
-@celery.task(name='scan_unfinished_submission')
-def scan_unfinished_submission():
-    submissions = Submission.query.filter(
-        or_(Submission.verdict == 'Queuing', Submission.verdict == 'Being Judged')).all()
-    for submission in submissions:
-        if submission.run_id:
-            refresh_submit_status.delay(submission.id)
-        else:
-            submit_problem.delay(submission.id)
-    contest_submissions = ContestSubmission.query.filter(
-        or_(ContestSubmission.verdict == 'Queuing', ContestSubmission.verdict == 'Being Judged')).all()
-    for submission in contest_submissions:
-        if submission.run_id:
-            refresh_submit_status.delay(submission.id, True)
-        else:
-            submit_problem.delay(submission.id, True)
 
 
 @celery.task(bind=True, name='refresh_contest_info')
@@ -236,7 +217,7 @@ def update_problem_all():
     url = f'{BASE_URL}/problems/'
     while url:
         try:
-            r = s.get(url)
+            r = s.get(url, timeout=5)
         except requests.exceptions.RequestException:
             return
         url = r.json()['next']
@@ -250,7 +231,7 @@ def update_problem_all():
             if problem is None:
                 problem = Problem()
             try:
-                r = s.get(f'{BASE_URL}/problems/{oj_name}/{problem_id}')
+                r = s.get(f'{BASE_URL}/problems/{oj_name}/{problem_id}', timeout=5)
             except requests.exceptions.RequestException:
                 return
             for attr in r.json():

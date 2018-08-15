@@ -17,10 +17,6 @@ class Config(object):
             'task': 'update_problem_all',
             'schedule': timedelta(hours=1)
         },
-        'scan_unfinished_submission': {
-            'task': 'scan_unfinished_submission',
-            'schedule': timedelta(minutes=10)
-        },
         'refresh_recent_contest': {
             'task': 'refresh_recent_contest',
             'schedule': timedelta(hours=1)
