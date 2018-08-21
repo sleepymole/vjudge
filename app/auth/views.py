@@ -3,7 +3,8 @@ from flask_login import login_user, logout_user, login_required, current_user
 
 from . import auth
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm
-from ..models import db, User
+from ..decorators import permission_required
+from ..models import db, User, Permission
 
 
 @auth.before_app_request
@@ -33,8 +34,8 @@ def logout():
 
 
 @auth.route('/register', methods=['GET', 'POST'])
+@permission_required(Permission.MODERATE)
 def register():
-    return redirect(url_for('main.index'))
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User()
