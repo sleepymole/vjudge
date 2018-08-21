@@ -35,6 +35,7 @@ def submit_problem(self, sid, in_contest=False):
     data = r.json()
     if data.get('status') != 'success':
         submission.verdict = 'Submit Failed'
+        return
     submission.run_id = data.get('id')
     db.session.commit()
     refresh_submit_status.delay(sid, in_contest)

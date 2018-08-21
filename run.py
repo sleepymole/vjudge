@@ -3,7 +3,7 @@ import subprocess
 import time
 
 flask_process = subprocess.Popen(shlex.split('gunicorn -w 2 -k gevent manage:app'))
-celery_process = subprocess.Popen(shlex.split('celery worker -l INFO -A manage.celery --beat'))
+celery_process = subprocess.Popen(shlex.split('celery worker --app=manage.celery -l info --concurrency=4 --beat'))
 
 try:
     while True:
