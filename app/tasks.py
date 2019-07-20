@@ -163,7 +163,7 @@ def refresh_contest_info(self, contest_id):
     db.session.add(contest)
     db.session.commit()
     if contest.problems == '[]':
-        if contest.start_time - datetime.utcnow() < timedelta(minutes=10):
+        if contest.start_time - datetime.utcnow() < timedelta(minutes=60):
             raise self.retry(max_retries=60, countdown=60)
     elif contest.start_time < datetime.utcnow() < contest.end_time:
         raise self.retry(max_retries=12, countdown=5 * 60)
@@ -209,7 +209,8 @@ def refresh_recent_contest(self):
         db.session.commit()
     contests = Contest.query.all()
     for contest in contests:
-        refresh_contest_info.delay(contest.id)
+        if contest.status != 'Ended':
+            refresh_contest_info.delay(contest.id)
 
 
 @celery.task(name='update_problem_all')
