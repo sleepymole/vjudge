@@ -211,8 +211,8 @@ class Contest(db.Model):
     title = db.Column(db.String, default='')
     public = db.Column(db.Boolean, default=False)
     status = db.Column(db.String, default='Pending')
-    start_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
-    end_time = db.Column(db.DateTime, default=datetime.fromtimestamp(0, tz=timezone.utc))
+    start_time = db.Column(db.DateTime, default=datetime.utcfromtimestamp(0))
+    end_time = db.Column(db.DateTime, default=datetime.utcfromtimestamp(0))
 
     def get_ori_problem(self, problem_id):
         ori_problems = self.get_ori_problems()

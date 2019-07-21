@@ -102,7 +102,7 @@ def update_problem(self, oj_name, problem_id):
         raise self.retry(exc=exc)
     if 'error' in r.json():
         raise self.retry()
-    last_update = datetime.fromtimestamp(r.json()['last_update'])
+    last_update = datetime.utcfromtimestamp(r.json()['last_update'])
     problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
     if problem and last_update - problem.last_update < timedelta(minutes=10):
         self.retry()
@@ -143,8 +143,8 @@ def refresh_contest_info(self, contest_id):
     contest.status = contest_data.get('status', 'Pending')
     start_time = contest_data.get('start_time', 0)
     end_time = contest_data.get('end_time', 0)
-    contest.start_time = datetime.fromtimestamp(start_time)
-    contest.end_time = datetime.fromtimestamp(end_time)
+    contest.start_time = datetime.utcfromtimestamp(start_time)
+    contest.end_time = datetime.utcfromtimestamp(end_time)
     problem_list = []
     for p in problems:
         oj_name = p['oj_name']
@@ -152,7 +152,7 @@ def refresh_contest_info(self, contest_id):
         problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first() or Problem()
         for attr in p:
             if attr == 'last_update':
-                problem.last_update = datetime.fromtimestamp(p[attr])
+                problem.last_update = datetime.utcfromtimestamp(p[attr])
             elif hasattr(problem, attr):
                 value = p[attr]
                 if value:
@@ -198,8 +198,8 @@ def refresh_recent_contest(self):
             contest.title = title
             contest.public = public
             contest.status = status
-            contest.start_time = datetime.fromtimestamp(start_time)
-            contest.end_time = datetime.fromtimestamp(end_time)
+            contest.start_time = datetime.utcfromtimestamp(start_time)
+            contest.end_time = datetime.utcfromtimestamp(end_time)
             db.session.add(contest)
         else:
             contest.clone_name = oj_name
@@ -238,7 +238,7 @@ def update_problem_all():
                 return
             for attr in r.json():
                 if attr == 'last_update':
-                    problem.last_update = datetime.fromtimestamp(r.json()[attr])
+                    problem.last_update = datetime.utcfromtimestamp(r.json()[attr])
                 elif hasattr(problem, attr):
                     value = r.json()[attr]
                     if value:
