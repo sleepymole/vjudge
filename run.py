@@ -3,7 +3,7 @@ import subprocess
 import time
 
 flask_process = subprocess.Popen(shlex.split('gunicorn -w 2 -k gevent manage:app'))
-celery_process = subprocess.Popen(shlex.split('celery worker --app=manage.celery -l info --concurrency=4 --beat'))
+celery_process = subprocess.Popen(shlex.split('celery worker --app=manage.celery -l info --concurrency=8 --beat'))
 
 try:
     while True:
@@ -12,7 +12,7 @@ try:
             flask_process = subprocess.Popen(shlex.split('gunicorn -w 2 -k gevent manage:app'))
         if celery_process.poll() == 0:
             celery_process = subprocess.Popen(
-                shlex.split('celery worker --app=manage.celery -l info --concurrency=4 --beat'))
+                shlex.split('celery worker --app=manage.celery -l info --concurrency=8 --beat'))
 except KeyboardInterrupt:
     flask_process.terminate()
     celery_process.terminate()

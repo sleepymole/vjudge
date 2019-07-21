@@ -1,5 +1,6 @@
 import os
 import re
+from celery.schedules import crontab
 from datetime import timedelta
 
 
@@ -16,7 +17,7 @@ class Config(object):
     CELERYBEAT_SCHEDULE = {
         'update-problems': {
             'task': 'update_problem_all',
-            'schedule': timedelta(hours=12)
+            'schedule': crontab(hour={6, 21})
         },
         'refresh_recent_contest': {
             'task': 'refresh_recent_contest',
