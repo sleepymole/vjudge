@@ -164,8 +164,6 @@ def problem_list():
     page = request.args.get('page', 1, type=int)
     per_page = current_app.config.get('FLASKY_FOLLOWERS_PER_PAGE', 20)
     kwargs = dict(request.args)
-    for k in kwargs:
-        kwargs[k] = kwargs[k][0]
     need_redirect = False
     if oj_name == 'all':
         kwargs.pop('oj')
