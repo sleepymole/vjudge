@@ -1,14 +1,17 @@
 import json
 import re
+import redis
+import requests
 from datetime import datetime, timedelta
 
-import requests
-
-from config import Config
+from config import Config, VJUDGE_REDIS_CONFIG
 from . import celery
 from .models import db, Submission, ContestSubmission, Problem, Contest
 
 BASE_URL = Config.VJUDGE_REMOTE_URL
+
+redis_con = redis.StrictRedis(host=VJUDGE_REDIS_CONFIG['host'], port=VJUDGE_REDIS_CONFIG['port'],
+                              db=VJUDGE_REDIS_CONFIG['db'])
 
 
 @celery.task(bind=True)
@@ -126,6 +129,10 @@ def refresh_contest_info(self, contest_id):
     res = re.match(r'^(.*?)_ct_([0-9]+)$', contest.clone_name)
     if not res:
         return
+    last = redis_con.get(f'vjudge-last-refresh-contest-{contest_id}') or 0
+    last = datetime.fromtimestamp(float(last))
+    if datetime.now() - last < timedelta(hours=1) < contest.start_time - datetime.utcnow():
+        return
     site, cid = res.groups()
     url = f'{BASE_URL}/contests/{site}/{cid}'
     s = requests.session()
@@ -162,15 +169,12 @@ def refresh_contest_info(self, contest_id):
         contest.problems = json.dumps(problem_list)
     db.session.add(contest)
     db.session.commit()
-    if contest.problems == '[]':
-        if contest.start_time - datetime.utcnow() < timedelta(minutes=60):
-            raise self.retry(max_retries=60, countdown=60)
-    elif contest.start_time < datetime.utcnow() < contest.end_time:
-        raise self.retry(max_retries=12, countdown=5 * 60)
+    redis_con.set(f'vjudge-last-refresh-contest-{contest_id}', datetime.now().timestamp(), ex=60 * 60)
+    if contest.problems == '[]' and contest.start_time - datetime.utcnow() < timedelta(minutes=5):
+        raise self.retry(max_retries=10, countdown=30)
 
 
-@celery.task(bind=True, name='refresh_recent_contest')
-def refresh_recent_contest(self):
+def update_recent_contest(self):
     url = f'{BASE_URL}/contests/hdu'
     s = requests.session()
     try:
@@ -207,9 +211,19 @@ def refresh_recent_contest(self):
             contest.public = public
             contest.status = status
         db.session.commit()
+
+
+@celery.task(bind=True, name='refresh_recent_contest')
+def refresh_recent_contest(self):
+    last = redis_con.get('vjudge-last-refresh-recent-contest') or 0
+    last = datetime.fromtimestamp(float(last))
+    if datetime.now() - last >= timedelta(hours=12):
+        update_recent_contest(self)
+        redis_con.set('vjudge-last-refresh-recent-contest', datetime.now().timestamp())
     contests = Contest.query.all()
     for contest in contests:
-        if contest.status != 'Ended':
+        if contest.status != 'Ended' and contest.start_time - timedelta(
+                hours=6) <= datetime.utcnow() <= contest.start_time + timedelta(hours=6):
             refresh_contest_info.delay(contest.id)
 
 
