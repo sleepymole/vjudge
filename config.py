@@ -17,7 +17,7 @@ class Config(object):
     CELERYBEAT_SCHEDULE = {
         'update-problems': {
             'task': 'update_problem_all',
-            'schedule': crontab(hour={6, 21})
+            'schedule': crontab(hour={13, 22}, minute=0)
         },
         'refresh_recent_contest': {
             'task': 'refresh_recent_contest',
