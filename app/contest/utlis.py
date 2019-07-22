@@ -1,7 +1,6 @@
 from datetime import timedelta
-from functools import wraps
-
 from flask import abort, g
+from functools import wraps
 
 from ..models import Contest, ContestSubmission, User
 

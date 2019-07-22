@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from flask import current_app, render_template, request, flash, redirect, abort, url_for, g
 from flask_login import login_required, current_user
 from sqlalchemy import func
