@@ -55,7 +55,7 @@ def refresh_submit_status(self, sid, in_contest=False):
     try:
         r = s.get(url, timeout=5)
     except requests.exceptions.RequestException as exc:
-        raise self.retry(exc=exc, countdown=5)
+        raise self.retry(max_retries=120, exc=exc, countdown=self.request.retries + 1)
     data = r.json()
     if 'error' in data:
         self.retry()
