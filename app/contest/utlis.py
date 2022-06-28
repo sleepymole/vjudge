@@ -1,13 +1,14 @@
 from datetime import timedelta
-from flask import abort, g
 from functools import wraps
+
+from flask import abort, g
 
 from ..models import Contest, ContestSubmission, User
 
 
 def strftime(tm):
     secs = int(tm.total_seconds())
-    return f'{secs//3600}:{secs%3600//60}:{secs%60}'
+    return f"{secs // 3600}:{secs % 3600 // 60}:{secs % 60}"
 
 
 def contest_check(f):
@@ -50,11 +51,16 @@ def generate_board():
         ac_tm, wa_cnt = getattr(record, submission.problem_id, (None, 0))
         if ac_tm is not None:
             continue
-        if submission.verdict in ('Queuing', 'Being Judged', 'Submit Failed', 'Compilation Error'):
+        if submission.verdict in (
+            "Queuing",
+            "Being Judged",
+            "Submit Failed",
+            "Compilation Error",
+        ):
             continue
-        if submission.verdict == 'Accepted':
+        if submission.verdict == "Accepted":
             record.solved += 1
-            ac_tm = (submission.time_stamp - contest.start_time)
+            ac_tm = submission.time_stamp - contest.start_time
             record.penalty += ac_tm + wa_cnt * timedelta(minutes=20)
             ac_tm = strftime(ac_tm)
         else:
@@ -66,15 +72,15 @@ def generate_board():
     board = []
     for record in records:
         u = User.query.get(int(record.user_id))
-        username = u.username if u else ''
+        username = u.username if u else ""
         data = {
-            'username': username,
-            'penalty': strftime(record.penalty),
-            'solved': record.solved,
-            'problem': []
+            "username": username,
+            "penalty": strftime(record.penalty),
+            "solved": record.solved,
+            "problem": [],
         }
         problem_list = [pid for pid in contest.get_ori_problems()]
         for pid in problem_list:
-            data['problem'].append((pid, *getattr(record, pid, (None, 0))))
+            data["problem"].append((pid, *getattr(record, pid, (None, 0))))
         board.append(data)
     return board

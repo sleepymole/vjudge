@@ -1,7 +1,7 @@
+from math import ceil
 from sqlalchemy import create_engine, orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from math import ceil
 from config import SQLALCHEMY_DATABASE_URI
 
 
@@ -22,13 +22,15 @@ class Pagination(object):
         return pages
 
     def prev(self, error_out=False):
-        assert self.query is not None, 'a query object is required ' \
-                                       'for this method to work'
+        assert self.query is not None, (
+            "a query object is required " "for this method to work"
+        )
         return self.query.paginate(self.page - 1, self.per_page, error_out)
 
     def next(self, error_out=False):
-        assert self.query is not None, 'a query object is required ' \
-                                       'for this method to work'
+        assert self.query is not None, (
+            "a query object is required " "for this method to work"
+        )
         return self.query.paginate(self.page + 1, self.per_page, error_out)
 
     @property
@@ -79,9 +81,11 @@ class BaseQuery(orm.Query):
 
 class SQLManager(object):
     def __init__(self):
-        if 'sqlite' in SQLALCHEMY_DATABASE_URI:
-            connect_args = {'check_same_thread': False}
-            engine = create_engine(SQLALCHEMY_DATABASE_URI, echo=False, connect_args=connect_args)
+        if "sqlite" in SQLALCHEMY_DATABASE_URI:
+            connect_args = {"check_same_thread": False}
+            engine = create_engine(
+                SQLALCHEMY_DATABASE_URI, echo=False, connect_args=connect_args
+            )
         else:
             engine = create_engine(SQLALCHEMY_DATABASE_URI, echo=False)
         session_factory = sessionmaker(bind=engine)

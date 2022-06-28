@@ -1,54 +1,4 @@
-import json
-import logging
-import os
 import random
-import re
-
-from gunicorn.glogging import Logger
-
-LOG_ENV = os.environ.get('LOG_ENV') or 'NORMAL'
-LOG_LEVEL = os.environ.get('LOG_LEVEL') or 'info'
-LOG_LEVELS = {
-    "critical": logging.CRITICAL,
-    "error": logging.ERROR,
-    "warning": logging.WARNING,
-    "info": logging.INFO,
-    "debug": logging.DEBUG
-}
-
-if LOG_ENV == 'JOURNAL':
-    log_format = r'[%(levelname)s] %(message)s'
-else:
-    log_format = r'[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s'
-
-date_fmt = r'%Y-%m-%d %H:%M:%S %z'
-
-
-class GLogger(Logger):
-    error_fmt = log_format
-    datefmt = date_fmt
-
-
-log_level = LOG_LEVELS.get(LOG_LEVEL, logging.INFO)
-logging.basicConfig(level=log_level, format=log_format, datefmt=date_fmt)
-logger = logging.getLogger('vjudge-core')
-
-SQLALCHEMY_DATABASE_URI = (os.environ.get('DATABASE_URL') or
-                           'sqlite:///' + os.path.dirname(__file__) + '/data.sqlite')
-
-OJ_CONFIG = os.path.dirname(__file__) + '/accounts.json'
-
-DEFAULT_REDIS_URI = 'redis://localhost:6379/0'
-
-REDIS_CONFIG = {
-    'host': 'localhost',
-    'port': 6379,
-    'db': 0,
-    'queue': {
-        'submitter_queue': 'vjudge-core-task-submitter',
-        'crawler_queue': 'vjudge-core-task-crawler'
-    }
-}
 
 USER_AGENTS = [
     "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
@@ -84,49 +34,15 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:2.0b13pre) Gecko/20110307 Firefox/4.0b13pre",
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:16.0) Gecko/20100101 Firefox/16.0",
     "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11",
-    "Mozilla/5.0 (X11; U; Linux x86_64; zh-CN; rv:1.9.2.10) Gecko/20100922 Ubuntu/10.10 (maverick) Firefox/3.6.10"
+    "Mozilla/5.0 (X11; U; Linux x86_64; zh-CN; rv:1.9.2.10) Gecko/20100922 Ubuntu/10.10 (maverick) Firefox/3.6.10",
 ]
 
 
 def get_header():
     return {
-        'User-Agent': random.choice(USER_AGENTS),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Connection': 'keep-alive',
-        'Accept-Encoding': 'gzip, deflate'
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Connection": "keep-alive",
+        "Accept-Encoding": "gzip, deflate",
     }
-
-
-def get_accounts():
-    with open(OJ_CONFIG) as f:
-        result = json.load(f)
-    normal_accounts = {}
-    for account in result['normal_accounts']:
-        site = account['site']
-        authentications = []
-        for auth in account['auth']:
-            authentications.append((auth['username'], auth['password']))
-        normal_accounts[site] = authentications
-    contest_accounts = {}
-    for account in result['contest_accounts']:
-        site = account['site']
-        for auth in account['auth']:
-            supported_contests = auth['supported_contests']
-            for contest_id in supported_contests:
-                oj_name = f'{site}_ct_{contest_id}'
-                if oj_name not in contest_accounts:
-                    contest_accounts[oj_name] = []
-                authentications = contest_accounts.get(oj_name)
-                authentications.append((auth['username'], auth['password']))
-    return normal_accounts, contest_accounts
-
-
-def init_redis_config():
-    redis_uri = os.environ.get('REDIS_URI') or DEFAULT_REDIS_URI
-    match = re.match('^redis://(.*?):([0-9]+)/([0-9]+)$', redis_uri)
-    if match:
-        REDIS_CONFIG['host'], REDIS_CONFIG['port'], REDIS_CONFIG['db'] = match.groups()
-
-
-init_redis_config()
