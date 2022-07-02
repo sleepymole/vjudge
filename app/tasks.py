@@ -6,6 +6,10 @@ import redis
 import requests
 
 from config import Config
+from core import db as core_db
+from core.models import Contest as CoreContest
+from core.models import Problem as CoreProblem
+from core.models import Submission as CoreSubmission
 from . import celery
 from .models import db, Submission, ContestSubmission, Problem, Contest
 
@@ -20,26 +24,16 @@ def submit_problem(self, sid, in_contest=False):
         submission = ContestSubmission.query.get(int(sid))
     else:
         submission = Submission.query.get(int(sid))
-    url = f"{BASE_URL}/submissions/"
-    s = requests.session()
-    data = {
-        "oj_name": submission.oj_name,
-        "problem_id": submission.problem_id,
-        "language": submission.language,
-        "source_code": submission.source_code,
-    }
-    try:
-        r = s.post(url, data, timeout=10)
-    except requests.exceptions.RequestException as exc:
-        if self.request.retries == self.max_retries:
-            submission.verdict = "Submit Failed"
-            db.session.commit()
-        raise self.retry(exc=exc, countdown=5)
-    data = r.json()
-    if data.get("status") != "success":
-        submission.verdict = "Submit Failed"
-        return
-    submission.run_id = data.get("id")
+    core_submission = CoreSubmission(
+        oj_name=submission.oj_name,
+        problem_id=submission.problem_id,
+        language=submission.language,
+        source_code=submission.source_code,
+    )
+    core_db.session.add(core_submission)
+    core_db.session.commit()
+    redis_con.lpush("vjudge-submitter-tasks", core_submission.id)
+    submission.run_id = core_submission.id
     db.session.commit()
     refresh_submit_status.delay(sid, in_contest)
 
@@ -50,18 +44,10 @@ def refresh_submit_status(self, sid, in_contest=False):
         submission = ContestSubmission.query.get(int(sid))
     else:
         submission = Submission.query.get(int(sid))
-    url = f"{BASE_URL}/submissions/{submission.run_id}"
-    s = requests.session()
-    try:
-        r = s.get(url, timeout=5)
-    except requests.exceptions.RequestException as exc:
-        raise self.retry(max_retries=120, exc=exc, countdown=self.request.retries + 1)
-    data = r.json()
-    if "error" in data:
-        self.retry()
-    verdict = data.get("verdict", "Queuing")
-    exe_time = data.get("exe_time", None)
-    exe_mem = data.get("exe_mem", None)
+    core_submission = CoreSubmission.query.get(submission.run_id)
+    verdict = core_submission.verdict
+    exe_time = core_submission.exe_time
+    exe_mem = core_submission.exe_mem
     if verdict and verdict != submission.verdict:
         submission.verdict = verdict
         submission.exe_time = exe_time or 0
@@ -88,37 +74,39 @@ def refresh_submit_status(self, sid, in_contest=False):
 
 @celery.task(bind=True)
 def refresh_problem(self, oj_name, problem_id):
-    url = f"{BASE_URL}/problems/{oj_name}/{problem_id}"
-    s = requests.session()
-    try:
-        r = s.post(url, timeout=5)
-    except requests.exceptions.RequestException as exc:
-        raise self.retry(exc=exc, countdown=5)
-    data = r.json()
-    if data.get("status") == "success":
-        update_problem.delay(oj_name=oj_name, problem_id=problem_id)
+    redis_con.lpush(
+        "vjudge-crawler-tasks",
+        json.dumps(
+            {
+                "oj_name": oj_name,
+                "type": "problem",
+                "all": False,
+                "problem_id": problem_id,
+            }
+        ),
+    )
+    update_problem.delay(oj_name=oj_name, problem_id=problem_id)
 
 
 @celery.task(bind=True, max_retries=10, default_retry_delay=5)
 def update_problem(self, oj_name, problem_id):
-    url = f"{BASE_URL}/problems/{oj_name}/{problem_id}"
-    s = requests.session()
-    try:
-        r = s.get(url, timeout=5)
-    except requests.exceptions.RequestException as exc:
-        raise self.retry(exc=exc)
-    if "error" in r.json():
-        raise self.retry()
-    last_update = datetime.utcfromtimestamp(r.json()["last_update"])
+    core_problem = CoreProblem.query.filter_by(
+        oj_name=oj_name, problem_id=problem_id
+    ).first()
+    if core_problem is None:
+        return
+    problem_json = core_problem.to_json()
+
+    last_update = datetime.utcfromtimestamp(problem_json["last_update"])
     problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
     if problem and last_update - problem.last_update < timedelta(minutes=10):
         self.retry()
     if problem is None:
         problem = Problem()
     problem.last_update = last_update
-    for attr in r.json():
+    for attr in problem_json:
         if attr != "last_update" and hasattr(problem, attr):
-            value = r.json()[attr]
+            value = problem_json[attr]
             if value:
                 setattr(problem, attr, value)
     db.session.add(problem)
@@ -133,6 +121,7 @@ def refresh_contest_info(self, contest_id):
     res = re.match(r"^(.*?)_ct_([0-9]+)$", contest.clone_name)
     if not res:
         return
+    site, cid = res.groups()
     last = redis_con.get(f"vjudge-last-refresh-contest-{contest_id}") or 0
     last = datetime.fromtimestamp(float(last))
     if (
@@ -141,23 +130,28 @@ def refresh_contest_info(self, contest_id):
         < contest.start_time - datetime.utcnow()
     ):
         return
-    site, cid = res.groups()
-    url = f"{BASE_URL}/contests/{site}/{cid}"
-    s = requests.session()
-    try:
-        s.post(url, timeout=10)
-        r = s.get(url, timeout=10)
-    except requests.exceptions.RequestException as exc:
-        raise self.retry(exc=exc, countdown=30)
-    if "error" in r.json():
-        raise self.retry(countdown=30)
-    contest_data = r.json()["contest"]
-    problems = r.json()["problems"]
-    contest.title = contest_data.get("title", "")
-    contest.public = contest_data.get("public", False)
-    contest.status = contest_data.get("status", "Pending")
-    start_time = contest_data.get("start_time", 0)
-    end_time = contest_data.get("end_time", 0)
+    redis_con.lpush(
+        "vjudge-crawler-tasks",
+        json.dumps(
+            {
+                "oj_name": contest.clone_name,
+                "type": "contest",
+            }
+        ),
+    )
+
+    core_contest = CoreContest.query.filter_by(site=site, contest_id=cid).first()
+    if core_contest is None:
+        return
+    core_problems = Problem.query.filter_by(oj_name=contest.clone_name).all()
+
+    contest_json = core_contest.to_json()
+    problems = core_problems.to_json()
+    contest.title = contest_json.get("title", "")
+    contest.public = contest_json.get("public", False)
+    contest.status = contest_json.get("status", "Pending")
+    start_time = contest_json.get("start_time", 0)
+    end_time = contest_json.get("end_time", 0)
     contest.start_time = datetime.utcfromtimestamp(start_time)
     contest.end_time = datetime.utcfromtimestamp(end_time)
     problem_list = []

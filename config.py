@@ -1,10 +1,13 @@
 import logging
 import os
+import random
+import string
 from datetime import timedelta
 from typing import List
 
 import toml
 from celery.schedules import crontab
+from sqlalchemy.engine import make_url
 
 
 class NormalAccount(object):
@@ -96,6 +99,11 @@ def _load_config_from_file():
 
 _load_config_from_file()
 
+db_url = make_url(Config.DATABASE_URL)
+if db_url.drivername == "sqlite" and db_url.database not in (None, "", ":memory:"):
+    db_url = db_url.set(database=os.path.join(os.getcwd(), db_url.database))
+    Config.DATABASE_URL = str(db_url)
+
 
 def _init_logger():
     if Config.LOG_ENV == "JOURNAL":
@@ -118,8 +126,14 @@ def _init_logger():
 logger = _init_logger()
 
 
+def gen_secret_key():
+    return "".join(
+        random.choice(string.ascii_letters + string.digits) for _ in range(32)
+    )
+
+
 class AppConfig(object):
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "A0Zr98j/3yX R~XHH!jmN]LWX/,?R"
+    SECRET_KEY = os.environ.get("SECRET_KEY") or gen_secret_key()
     SQLALCHEMY_DATABASE_URI = Config.DATABASE_URL
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
