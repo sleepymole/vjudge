@@ -1,0 +1,27 @@
+log-level = "info"
+database-url = "sqlite:///data.sqlite"
+default-redis-url = "redis://localhost:6379/0"
+celery-broker-url = "redis://localhost:6379/1"
+celery-backend-url = "redis://localhost:6379/2"
+
+[[accounts.normal]]
+site = "scu"
+username = "test-user1"
+password = "123456"
+
+[[accounts.normal]]
+site = "hdu"
+username = "test-user2"
+password = "123456"
+
+[[accounts.contest]]
+site = "hdu"
+username = "test-user3"
+password = "123456"
+authorized-contests = [984, 985]
+
+[[accounts.contest]]
+site = "hdu"
+username = "test-user4"
+password = "123456"
+authorized-contests = [984, 985]

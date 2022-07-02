@@ -1,8 +1,10 @@
 from math import ceil
+
 from sqlalchemy import create_engine, orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
-from config import SQLALCHEMY_DATABASE_URI
+
+from config import Config
 
 
 class Pagination(object):
@@ -81,13 +83,13 @@ class BaseQuery(orm.Query):
 
 class SQLManager(object):
     def __init__(self):
-        if "sqlite" in SQLALCHEMY_DATABASE_URI:
+        if "sqlite" in Config.DATABASE_URL:
             connect_args = {"check_same_thread": False}
             engine = create_engine(
-                SQLALCHEMY_DATABASE_URI, echo=False, connect_args=connect_args
+                Config.DATABASE_URL, echo=False, connect_args=connect_args
             )
         else:
-            engine = create_engine(SQLALCHEMY_DATABASE_URI, echo=False)
+            engine = create_engine(Config.DATABASE_URL, echo=False)
         session_factory = sessionmaker(bind=engine)
         self._session = scoped_session(session_factory)
         self.Model = declarative_base(bind=engine)

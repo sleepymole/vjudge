@@ -5,17 +5,13 @@ from datetime import datetime, timedelta
 import redis
 import requests
 
-from config import VJUDGE_REDIS_CONFIG
+from config import Config
 from . import celery
 from .models import db, Submission, ContestSubmission, Problem, Contest
 
 BASE_URL = None
 
-redis_con = redis.StrictRedis(
-    host=VJUDGE_REDIS_CONFIG["host"],
-    port=VJUDGE_REDIS_CONFIG["port"],
-    db=VJUDGE_REDIS_CONFIG["db"],
-)
+redis_con = redis.StrictRedis.from_url(Config.DEFAULT_REDIS_URL)
 
 
 @celery.task(bind=True)

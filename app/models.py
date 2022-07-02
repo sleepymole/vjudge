@@ -1,9 +1,10 @@
 import json
 from datetime import datetime
+from datetime import timedelta
 
+from authlib.jose import jwt, JoseError
 from flask import current_app
 from flask_login import UserMixin, AnonymousUserMixin
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import db, login_manager
@@ -126,14 +127,19 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_reset_token(self, expiration=3600):
-        s = Serializer(current_app.config["SECRET_KEY"], expiration)
-        return s.dumps({"reset": self.id})
+        header = {"alg": "HS256"}
+        payload = {
+            "iat": datetime.utcnow(),
+            "exp": datetime.utcnow() + timedelta(seconds=expiration),
+            "reset": self.id,
+        }
+        return jwt.encode(header, payload, current_app.config["SECRET_KEY"])
 
     def reset_password(self, token, new_password):
-        s = Serializer(current_app.config["SECRET_KEY"])
         try:
-            data = s.load(token)
-        except:
+            data = jwt.decode(token, current_app.config["SECRET_KEY"])
+            data.validate()
+        except JoseError:
             return False
         if data.get("reset") != self.id:
             return False

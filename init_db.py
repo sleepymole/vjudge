@@ -1,13 +1,13 @@
-from config import Config
-from manage import db, Role, User
+from config import AppConfig
 from core import db as core_db
+from manage import db, Role, User
 
 
 def init_db():
     db.create_all()
     Role.insert_roles()
     admin = User.query.get(1) or User()
-    admin.username = Config.FLASKY_ADMIN
+    admin.username = AppConfig.FLASKY_ADMIN
     admin.password = "123456"
     db.session.add(admin)
     db.session.commit()

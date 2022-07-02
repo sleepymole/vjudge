@@ -5,3 +5,4 @@ tests/
 venv/
 data.sqlite-journal
 celerybeat-schedule
+config.toml

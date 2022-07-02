@@ -3,7 +3,7 @@ from abc import abstractmethod, ABC
 
 import requests
 
-from masquerade import get_header
+from .masquerade import get_header
 
 logging.basicConfig(level=logging.INFO)
 

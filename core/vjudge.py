@@ -8,9 +8,9 @@ from queue import Queue, Empty
 import redis
 from sqlalchemy import or_
 
-from config import REDIS_CONFIG, logger
+from config import logger, Config
 from .models import db, Submission, Problem, Contest
-from .backend import get_client_by_oj_name, exceptions
+from .site import get_client_by_oj_name, exceptions
 
 
 class StatusCrawler(threading.Thread):
@@ -317,10 +317,8 @@ class PageCrawler(threading.Thread):
 class SubmitterHandler(threading.Thread):
     def __init__(self, normal_accounts, contest_accounts, daemon=None):
         super().__init__(daemon=daemon)
-        self._redis_key = REDIS_CONFIG["queue"]["submitter_queue"]
-        self._redis_con = redis.StrictRedis(
-            host=REDIS_CONFIG["host"], port=REDIS_CONFIG["port"], db=REDIS_CONFIG["db"]
-        )
+        self._redis_key = "vjudge-submitter-tasks"
+        self._redis_con = redis.StrictRedis.from_url(Config.DEFAULT_REDIS_URL)
         self._normal_accounts = normal_accounts
         self._contest_accounts = contest_accounts
         self._running_submitters = {}
@@ -333,7 +331,7 @@ class SubmitterHandler(threading.Thread):
         while True:
             data = self._redis_con.brpop(self._redis_key, timeout=600)
             if datetime.utcnow() - last_clean > timedelta(hours=1):
-                self._clean_free_submitters()
+                self._stop_idle_submitters()
                 last_clean = datetime.utcnow()
             if not data:
                 continue
@@ -403,7 +401,7 @@ class SubmitterHandler(threading.Thread):
         self._running_submitters[oj_name] = submitter_info
         return True
 
-    def _clean_free_submitters(self):
+    def _stop_idle_submitters(self):
         free_clients = []
         for oj_name in self._running_submitters:
             submitter_info = self._running_submitters[oj_name]
@@ -424,7 +422,7 @@ class SubmitterHandler(threading.Thread):
                 stopped_submitters.append(submitter)
         for submitter in stopped_submitters:
             self._stopping_submitters.remove(submitter)
-        logger.info("Cleaned free submitters")
+        logger.info("Stopped idle submitters")
         logger.info(f"Running submitters: {self._running_submitters}")
         logger.info(f"Stopping submitters: {self._stopping_submitters}")
 
@@ -432,10 +430,8 @@ class SubmitterHandler(threading.Thread):
 class CrawlerHandler(threading.Thread):
     def __init__(self, normal_accounts, contest_accounts, daemon=None):
         super().__init__(daemon=daemon)
-        self._redis_key = REDIS_CONFIG["queue"]["crawler_queue"]
-        self._redis_con = redis.StrictRedis(
-            host=REDIS_CONFIG["host"], port=REDIS_CONFIG["port"], db=REDIS_CONFIG["db"]
-        )
+        self._redis_key = "vjudge-crawler-tasks"
+        self._redis_con = redis.StrictRedis.from_url(Config.DEFAULT_REDIS_URL)
         self._normal_accounts = normal_accounts
         self._contest_accounts = contest_accounts
         self._running_crawlers = {}
@@ -445,10 +441,10 @@ class CrawlerHandler(threading.Thread):
     def run(self):
         last_clean = datetime.utcnow()
         while True:
-            data = self._redis_con.brpop(self._redis_key, timeout=600)
             if datetime.utcnow() - last_clean > timedelta(hours=1):
-                self._clean_free_crawlers()
+                self._stop_idle_crawlers()
                 last_clean = datetime.utcnow()
+            data = self._redis_con.brpop(self._redis_key, timeout=600)
             if not data:
                 continue
             try:
@@ -521,7 +517,7 @@ class CrawlerHandler(threading.Thread):
         self._running_crawlers[oj_name] = crawler_info
         return True
 
-    def _clean_free_crawlers(self):
+    def _stop_idle_crawlers(self):
         free_clients = []
         for oj_name in self._running_crawlers:
             crawler_info = self._running_crawlers[oj_name]
@@ -542,20 +538,32 @@ class CrawlerHandler(threading.Thread):
                 stopped_crawlers.append(crawler)
         for crawler in stopped_crawlers:
             self._stopping_crawlers.remove(crawler)
-        logger.info("Cleaned free crawlers")
+        logger.info("Stopped idle crawlers")
         logger.info(f"Running crawlers: {self._running_crawlers}")
         logger.info(f"Stopping crawlers: {self._stopping_crawlers}")
 
 
 class VJudge(object):
-    def __init__(self, normal_accounts=None, contest_accounts=None):
+    def __init__(self):
+        normal_accounts = {}
+        contest_accounts = {}
+        for account in Config.NORMAL_ACCOUNTS:
+            auths = normal_accounts.get(account.site, [])
+            auths.append((account.username, account.password))
+            normal_accounts[account.site] = auths
+        for account in Config.CONTEST_ACCOUNTS:
+            for contest in account.authorized_contests:
+                oj_name = f"{account.site}_ct_{contest}"
+                auths = contest_accounts.get(oj_name, [])
+                auths.append((account.username, account.password))
+                contest_accounts[oj_name] = auths
         if not normal_accounts and not contest_accounts:
             logger.warning(
                 "Neither normal_accounts nor contest_accounts has available account, "
                 "submitter and crawler will not work"
             )
-        self._normal_accounts = normal_accounts or {}
-        self._contest_accounts = contest_accounts or {}
+        self._normal_accounts = normal_accounts
+        self._contest_accounts = contest_accounts
 
     @property
     def normal_accounts(self):
