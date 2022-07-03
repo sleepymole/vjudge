@@ -28,7 +28,13 @@ def create_app(config_name):
     bootstrap.init_app(app)
     login_manager.init_app(app)
     moment.init_app(app)
-    celery.conf.update(app.config)
+
+    for k, v in app.config.items():
+        if k.startswith("CELERY_"):
+            k = k[len("CELERY_") :].lower()
+            celery.conf[k] = v
+    # Broker connection is lazy, so we don't need to connect and retry on startup.
+    celery.conf.broker_connection_retry_on_startup = False
 
     from .main import main as main_blueprint
 
