@@ -141,10 +141,17 @@ class AppConfig(object):
     FLASKY_ADMIN = "admin"
     FLASKY_FOLLOWERS_PER_PAGE = 20
     ENABLE_UTC = True
-    CELERYBEAT_SCHEDULE = {
-        "update-problems": {
+    CELERY_ENABLE_UTC = True
+    CELERY_BEAT_SCHEDULE = {
+        "refresh_problem_all": {
+            "task": "refresh_problem_all",
+            # Note: crontab is in UTC.
+            "schedule": crontab(hour={13, 22}, minute=13),
+        },
+        "update_problem_all": {
             "task": "update_problem_all",
-            "schedule": crontab(hour={13, 22}, minute=0),
+            # Note: crontab is in UTC.
+            "schedule": crontab(hour={13, 22}, minute=29),
         },
         "refresh_recent_contest": {
             "task": "refresh_recent_contest",

@@ -3,6 +3,7 @@ import re
 from datetime import datetime, timedelta
 
 import redis
+from sqlalchemy import or_
 
 from config import Config
 from core import db as core_db
@@ -88,27 +89,38 @@ def refresh_problem(self, oj_name, problem_id):
 
 @celery.task(bind=True, max_retries=10, default_retry_delay=5)
 def update_problem(self, oj_name, problem_id):
+    if not try_update_problem(oj_name, problem_id):
+        raise self.retry()
+
+
+def try_update_problem(oj_name, problem_id):
     core_problem = CoreProblem.query.filter_by(
         oj_name=oj_name, problem_id=problem_id
     ).first()
     if core_problem is None:
-        return
-    problem_json = core_problem.to_json()
+        return False
+    problem = (
+        Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
+        or Problem()
+    )
+    if problem.last_update == core_problem.last_update:
+        return False
 
-    last_update = datetime.utcfromtimestamp(problem_json["last_update"])
-    problem = Problem.query.filter_by(oj_name=oj_name, problem_id=problem_id).first()
-    if problem and last_update - problem.last_update < timedelta(minutes=10):
-        self.retry()
-    if problem is None:
-        problem = Problem()
-    problem.last_update = last_update
-    for attr in problem_json:
-        if attr != "last_update" and hasattr(problem, attr):
-            value = problem_json[attr]
-            if value:
-                setattr(problem, attr, value)
+    problem.oj_name = core_problem.oj_name
+    problem.problem_id = core_problem.problem_id
+    problem.last_update = core_problem.last_update
+    problem.title = core_problem.title
+    problem.description = core_problem.description
+    problem.input = core_problem.input
+    problem.output = core_problem.output
+    problem.sample_input = core_problem.sample_input
+    problem.sample_output = core_problem.sample_output
+    problem.time_limit = core_problem.time_limit
+    problem.mem_limit = core_problem.mem_limit
+
     db.session.add(problem)
     db.session.commit()
+    return True
 
 
 @celery.task(bind=True, name="refresh_contest_info")
@@ -183,6 +195,21 @@ def refresh_contest_info(self, contest_id):
         raise self.retry(max_retries=10, countdown=30)
 
 
+@celery.task(bind=True, name="refresh_recent_contest")
+def refresh_recent_contest(self):
+    last = redis_con.get("vjudge-last-refresh-recent-contest") or 0
+    last = datetime.fromtimestamp(float(last))
+    if datetime.now() - last >= timedelta(hours=1):
+        update_recent_contest()
+        redis_con.set("vjudge-last-refresh-recent-contest", datetime.now().timestamp())
+    contests = Contest.query.all()
+    for contest in contests:
+        if contest.status != "Ended" and contest.start_time - timedelta(
+            hours=6
+        ) <= datetime.utcnow() <= contest.start_time + timedelta(hours=6):
+            refresh_contest_info.delay(contest.id)
+
+
 def update_recent_contest():
     c = contest_clients.get("hdu")
     if c is None:
@@ -220,48 +247,27 @@ def update_recent_contest():
         db.session.commit()
 
 
-@celery.task(bind=True, name="refresh_recent_contest")
-def refresh_recent_contest(self):
-    last = redis_con.get("vjudge-last-refresh-recent-contest") or 0
-    last = datetime.fromtimestamp(float(last))
-    if datetime.now() - last >= timedelta(hours=12):
-        update_recent_contest()
-        redis_con.set("vjudge-last-refresh-recent-contest", datetime.now().timestamp())
-    contests = Contest.query.all()
-    for contest in contests:
-        if contest.status != "Ended" and contest.start_time - timedelta(
-            hours=6
-        ) <= datetime.utcnow() <= contest.start_time + timedelta(hours=6):
-            refresh_contest_info.delay(contest.id)
+@celery.task(name="refresh_problem_all")
+def refresh_problem_all():
+    redis_con.lpush(
+        "vjudge-crawler-tasks",
+        json.dumps({"oj_name": "scu", "type": "problem", "all": True}),
+    )
+    redis_con.lpush(
+        "vjudge-crawler-tasks",
+        json.dumps({"oj_name": "hdu", "type": "problem", "all": True}),
+    )
 
 
 @celery.task(name="update_problem_all")
 def update_problem_all():
     page = 1
     while True:
-        pagination = Problem.query.paginate(page=page, per_page=100, error_out=False)
+        pagination = CoreProblem.query.filter(
+            or_(CoreProblem.oj_name == "scu", CoreProblem.oj_name == "hdu")
+        ).paginate(page=page, per_page=100, error_out=False)
         if len(pagination.items) == 0:
             break
-        for item in pagination.items:
-            problem_json = item.to_json()
-            oj_name = problem_json["oj_name"]
-            problem_id = problem_json["problem_id"]
-            problem = Problem.query.filter_by(
-                oj_name=oj_name, problem_id=problem_id
-            ).first()
-            if problem and datetime.utcnow() - problem.last_update < timedelta(
-                hours=12
-            ):
-                continue
-            if problem is None:
-                problem = Problem()
-            for attr in problem_json:
-                if attr == "last_update":
-                    problem.last_update = datetime.utcfromtimestamp(problem_json[attr])
-                elif hasattr(problem, attr):
-                    value = problem_json[attr]
-                    if value:
-                        setattr(problem, attr, value)
-            db.session.add(problem)
-            db.session.commit()
+        for core_problem in pagination.items:
+            try_update_problem(core_problem.oj_name, core_problem.problem_id)
         page += 1
