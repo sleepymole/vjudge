@@ -153,7 +153,11 @@ class Submitter(threading.Thread):
                 run_id = self._client.submit_problem(
                     submission.problem_id, submission.language, submission.source_code
                 )
-            except (exceptions.SubmitError, exceptions.ConnectionError) as e:
+            except (
+                exceptions.SubmitError,
+                exceptions.ConnectionError,
+                exceptions.LoginError,
+            ) as e:
                 submission.verdict = "Submit Failed"
                 db.session.commit()
                 logger.error(

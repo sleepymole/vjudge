@@ -12,7 +12,7 @@ from ..base import BaseClient, ContestClient, ContestInfo
 
 __all__ = ("HDUClient", "HDUContestClient")
 
-BASE_URL = "http://acm.hdu.edu.cn"
+BASE_URL = "https://acm.hdu.edu.cn"
 
 LANG_ID = {
     "G++": "0",
@@ -149,6 +149,10 @@ class _UniClient(BaseClient):
             raise exceptions.ConnectionError(f'Request "{url}" failed')
         if re.search("Sign In Your Account", r.text):
             raise exceptions.LoginRequired("Login is required")
+        if re.search("Account Verification", r.text):
+            raise exceptions.LoginError("Account verification is required")
+        if re.search("Waiting account to be approved", r.text):
+            raise exceptions.LoginError("Account is not approved")
         return r.text
 
     def _get_login_url(self):
