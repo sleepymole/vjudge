@@ -3,17 +3,15 @@ import re
 from datetime import datetime, timedelta
 
 import redis
-import requests
 
 from config import Config
 from core import db as core_db
 from core.models import Contest as CoreContest
 from core.models import Problem as CoreProblem
 from core.models import Submission as CoreSubmission
+from core.site import contest_clients
 from . import celery
 from .models import db, Submission, ContestSubmission, Problem, Contest
-
-BASE_URL = None
 
 redis_con = redis.StrictRedis.from_url(Config.DEFAULT_REDIS_URL)
 
@@ -185,14 +183,12 @@ def refresh_contest_info(self, contest_id):
         raise self.retry(max_retries=10, countdown=30)
 
 
-def update_recent_contest(self):
-    url = f"{BASE_URL}/contests/hdu"
-    s = requests.session()
-    try:
-        r = s.get(url, timeout=10)
-    except requests.exceptions.RequestException as exc:
-        raise self.retry(exc=exc, countdown=5)
-    contests = r.json()["contests"]
+def update_recent_contest():
+    c = contest_clients.get("hdu")
+    if c is None:
+        return
+    result = c.get_recent_contest()
+    contests = [x.to_json() for x in result]
     contests.reverse()
     for contest in contests:
         contest_id = contest.get("contest_id")
@@ -229,7 +225,7 @@ def refresh_recent_contest(self):
     last = redis_con.get("vjudge-last-refresh-recent-contest") or 0
     last = datetime.fromtimestamp(float(last))
     if datetime.now() - last >= timedelta(hours=12):
-        update_recent_contest(self)
+        update_recent_contest()
         redis_con.set("vjudge-last-refresh-recent-contest", datetime.now().timestamp())
     contests = Contest.query.all()
     for contest in contests:
@@ -241,18 +237,15 @@ def refresh_recent_contest(self):
 
 @celery.task(name="update_problem_all")
 def update_problem_all():
-    s = requests.session()
-    url = f"{BASE_URL}/problems/"
-    while url:
-        try:
-            r = s.get(url, timeout=5)
-        except requests.exceptions.RequestException:
-            return
-        url = r.json()["next"]
-        problem_list = r.json()["problems"]
-        for p in problem_list:
-            oj_name = p["oj_name"]
-            problem_id = p["problem_id"]
+    page = 1
+    while True:
+        pagination = Problem.query.paginate(page=page, per_page=100, error_out=False)
+        if len(pagination.items) == 0:
+            break
+        for item in pagination.items:
+            problem_json = item.to_json()
+            oj_name = problem_json["oj_name"]
+            problem_id = problem_json["problem_id"]
             problem = Problem.query.filter_by(
                 oj_name=oj_name, problem_id=problem_id
             ).first()
@@ -262,16 +255,13 @@ def update_problem_all():
                 continue
             if problem is None:
                 problem = Problem()
-            try:
-                r = s.get(f"{BASE_URL}/problems/{oj_name}/{problem_id}", timeout=5)
-            except requests.exceptions.RequestException:
-                return
-            for attr in r.json():
+            for attr in problem_json:
                 if attr == "last_update":
-                    problem.last_update = datetime.utcfromtimestamp(r.json()[attr])
+                    problem.last_update = datetime.utcfromtimestamp(problem_json[attr])
                 elif hasattr(problem, attr):
-                    value = r.json()[attr]
+                    value = problem_json[attr]
                     if value:
                         setattr(problem, attr, value)
             db.session.add(problem)
             db.session.commit()
+        page += 1
