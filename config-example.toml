@@ -1,12 +1,22 @@
 log-level = "info"
+# The database url used to store the data.
+# The format is: dialect+driver://username:password@host:port/database.
+# Default: sqlite:///data.sqlite.
 database-url = "sqlite:///data.sqlite"
+# The redis url used for internal communication.
 default-redis-url = "redis://localhost:6379/0"
+# The redis url used for celery broker.
 celery-broker-url = "redis://localhost:6379/1"
+# The redis url used for celery backend.
 celery-backend-url = "redis://localhost:6379/2"
 
+# Configure for the normal accounts.
 [[accounts.normal]]
+# Which site the account is used for. Currently supported: "scu", "hdu".
 site = "scu"
+# The username of the account.
 username = "test-user1"
+# The password of the account.
 password = "123456"
 
 [[accounts.normal]]
@@ -14,10 +24,15 @@ site = "hdu"
 username = "test-user2"
 password = "123456"
 
+# Configure the the contest accounts.
 [[accounts.contest]]
+# Which site the account is used for. Currently only "hdu" is supported.
 site = "hdu"
+# The username of the account.
 username = "test-user3"
+# The password of the account.
 password = "123456"
+# The contest id list which the account is authorized to login.
 authorized-contests = [984, 985]
 
 [[accounts.contest]]
