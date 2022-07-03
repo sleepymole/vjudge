@@ -38,4 +38,5 @@ python init_db.py
 python run.py
 ```
 
-You can access the server at http://localhost:8080/.
+You can access the server at http://localhost:8080/. The default password for admin is `123456`. Please change it
+immediately. Note that only moderate or higher role can register new users.
