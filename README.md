@@ -40,21 +40,25 @@ python run.py
 ```
 
 You can access the server at http://localhost:8080/. The default password for admin is `123456`. Please change it
-immediately. Note that only moderate or higher role can register new users.
+immediately. 
+
+Note that only moderate or higher role can register new users. You must login to admin or user with
+moderator role first, and then open http://localhost:8000/auth/register to register a new user.
+It's ugly. We will support a better way like invitation code in the future.
 
 ## Background Jobs
 
 There are three background jobs in server.
 
-* refresh_problem_all:
+* `refresh_problem_all`:
   This job is used to refresh problem data from scu and hdu online judge.
   It is scheduled to run every day at 13:13 and 22:13 in **UTC**.
 
-* update_problem_all:
+* `update_problem_all`:
   This job is used to update problem data in database.
   It is scheduled to run every day at 13:29 and 22:29 in **UTC**.
 
-* refresh_recent_contest:
+* `refresh_recent_contest`:
   This job is used to refresh recent contest data from hdu online judge.
   It is scheduled to run every 5 minutes.
 
