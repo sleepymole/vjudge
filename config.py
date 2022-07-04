@@ -25,9 +25,16 @@ class ContestAccount(object):
         self.authorized_contests = authorized_contests
 
 
+def gen_secret_key():
+    return "".join(
+        random.choice(string.ascii_letters + string.digits) for _ in range(32)
+    )
+
+
 class Config(object):
     LOG_ENV = os.environ.get("LOG_ENV") or "NORMAL"
     LOG_LEVEL = os.environ.get("LOG_LEVEL") or "info"
+    SECRET_KEY = os.environ.get("SECRET_KEY") or gen_secret_key()
     DATABASE_URL = os.environ.get("DATABASE_URL") or "sqlite:///data.sqlite"
     DEFAULT_REDIS_URL = (
         os.environ.get("DEFAULT_REDIS_URL") or "redis://localhost:6379/0"
@@ -62,6 +69,13 @@ def _load_config_from_file():
     if config.get("celery-backend-url") is not None:
         Config.CELERY_RESULT_BACKEND = config["celery-backend-url"]
         del config["celery-backend-url"]
+    if config.get("security") is not None:
+        security = config["security"]
+        if security.get("secret-key", "") != "":
+            Config.SECRET_KEY = security["secret-key"]
+            del security["secret-key"]
+        if len(security) == 0:
+            del config["security"]
     accounts = config.get("accounts")
     if accounts is not None:
         normal = accounts.get("normal")
@@ -124,12 +138,6 @@ def _init_logger():
 
 
 logger = _init_logger()
-
-
-def gen_secret_key():
-    return "".join(
-        random.choice(string.ascii_letters + string.digits) for _ in range(32)
-    )
 
 
 class AppConfig(object):

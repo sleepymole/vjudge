@@ -10,6 +10,13 @@ celery-broker-url = "redis://localhost:6379/1"
 # The redis url used for celery backend.
 celery-backend-url = "redis://localhost:6379/2"
 
+[security]
+# The secret key used to sign the session, CSRF tokens, password reset tokens.
+# If not set, a random secret key will be generated on every startup.
+# Highly recommended to set this secret key. Otherwise, user needs to re-login
+# every time the server restarts.
+#secret-key = "secret"
+
 # Configure for the normal accounts.
 [[accounts.normal]]
 # Which site the account is used for. Currently supported: "scu", "hdu".

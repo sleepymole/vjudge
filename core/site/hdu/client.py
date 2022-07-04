@@ -116,14 +116,14 @@ class _UniClient(BaseClient):
     def _find_language_id(self, problem_id, language):
         url = self._get_submit_page_url(problem_id)
         resp = self._request_url("get", url)
-        select = BeautifulSoup(resp, "lxml").find('select', attrs={'name': 'language'})
+        select = BeautifulSoup(resp, "lxml").find("select", attrs={"name": "language"})
         if select is None:
             return None
-        options = select.find_all('option')
+        options = select.find_all("option")
         langs = {}
         for option in options:
             try:
-                lang_id = option['value']
+                lang_id = option["value"]
             except KeyError:
                 continue
             langs[option.text.strip().lower()] = lang_id
@@ -131,17 +131,17 @@ class _UniClient(BaseClient):
 
         # Hack: Force to use 'G++' or 'GCC' if possible. Our frontend only support 'C++' and 'C'.
         # But 'G++' and 'GCC' are the default languages for real competition.
-        if target == 'c++' or target == 'g++':
-            if 'g++' in langs:
-                return langs['g++']
-            elif 'c++' in langs:
-                return langs['c++']
+        if target == "c++" or target == "g++":
+            if "g++" in langs:
+                return langs["g++"]
+            elif "c++" in langs:
+                return langs["c++"]
             return None
-        if target == 'c' or target == 'gcc':
-            if 'gcc' in langs:
-                return langs['gcc']
-            elif 'c' in langs:
-                return langs['c']
+        if target == "c" or target == "gcc":
+            if "gcc" in langs:
+                return langs["gcc"]
+            elif "c" in langs:
+                return langs["c"]
             return None
         return langs.get(target)
 
