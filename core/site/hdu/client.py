@@ -14,16 +14,6 @@ __all__ = ("HDUClient", "HDUContestClient")
 
 BASE_URL = "https://acm.hdu.edu.cn"
 
-LANG_ID = {
-    "G++": "0",
-    "GCC": "1",
-    "C++": "2",
-    "C": "3",
-    "Pascal": "4",
-    "Java": "5",
-    "C#": "6",
-}
-
 PAGE_TITLES = {
     "Problem Description": "description",
     "Input": "input",
@@ -88,13 +78,14 @@ class _UniClient(BaseClient):
     def submit_problem(self, problem_id, language, source_code):
         if self.auth is None:
             raise exceptions.LoginRequired("Login is required")
-        if language not in LANG_ID:
+        lang_id = self._find_language_id(problem_id, language)
+        if lang_id is None:
             raise exceptions.SubmitError(f'Language "{language}" is not supported')
         if self.client_type == "contest":
             source_code = self.__class__._encode_source_code(source_code)
         data = {
             "problemid": problem_id,
-            "language": LANG_ID[language],
+            "language": lang_id,
             "usercode": source_code,
         }
         if self.client_type == "contest":
@@ -121,6 +112,38 @@ class _UniClient(BaseClient):
         except (AttributeError, StopIteration):
             raise exceptions.SubmitError("Submit failed unexpectedly")
         return run_id
+
+    def _find_language_id(self, problem_id, language):
+        url = self._get_submit_page_url(problem_id)
+        resp = self._request_url("get", url)
+        select = BeautifulSoup(resp, "lxml").find('select', attrs={'name': 'language'})
+        if select is None:
+            return None
+        options = select.find_all('option')
+        langs = {}
+        for option in options:
+            try:
+                lang_id = option['value']
+            except KeyError:
+                continue
+            langs[option.text.strip().lower()] = lang_id
+        target = language.lower()
+
+        # Hack: Force to use 'G++' or 'GCC' if possible. Our frontend only support 'C++' and 'C'.
+        # But 'G++' and 'GCC' are the default languages for real competition.
+        if target == 'c++' or target == 'g++':
+            if 'g++' in langs:
+                return langs['g++']
+            elif 'c++' in langs:
+                return langs['c++']
+            return None
+        if target == 'c' or target == 'gcc':
+            if 'gcc' in langs:
+                return langs['gcc']
+            elif 'c' in langs:
+                return langs['c']
+            return None
+        return langs.get(target)
 
     def get_submit_status(self, run_id, **kwargs):
         user_id = kwargs.get("user_id", "")
@@ -166,6 +189,12 @@ class _UniClient(BaseClient):
             return f"{BASE_URL}/contests/contest_submit.php?action=submit&cid={self.contest_id}"
         else:
             return f"{BASE_URL}/submit.php?action=submit"
+
+    def _get_submit_page_url(self, problem_id):
+        if self.client_type == "contest":
+            return f"{BASE_URL}/contests/contest_submit.php?cid={self.contest_id}&pid={problem_id}"
+        else:
+            return f"{BASE_URL}/submit.php?pid={problem_id}"
 
     def _get_status_url(self, run_id="", problem_id="", user_id=""):
         if self.client_type == "contest":
@@ -399,16 +428,38 @@ class HDUContestClient(_UniClient, ContestClient):
             contest_info = ContestInfo(
                 "hdu", contest_id=tds[0], title=tds[1], status=tds[4]
             )
-            r = re.search(
+            res = re.search(
                 "([0-9]{4})-([0-9]{2})-([0-9]{2}) *?([0-9]{2}):([0-9]{2}):([0-9]{2})",
                 tds[2],
             )
-            if r:
-                contest_info.start_time = cls._to_timestamp(r.groups())
+            if res:
+                contest_info.start_time = cls._to_timestamp(res.groups())
+            end_time = cls._find_contest_end_time(tds[0])
+            if end_time:
+                contest_info.end_time = end_time
             if tds[3] != "Public":
                 contest_info.public = False
             result.append(contest_info)
         return result
+
+    @classmethod
+    def _find_contest_end_time(cls, contest_id):
+        from ..base import get_header
+
+        session = requests.session()
+        session.headers.update(get_header())
+        url = f"{BASE_URL}/userloginex.php?cid={contest_id}"
+        try:
+            r = session.get(url, timeout=5)
+        except requests.exceptions.RequestException:
+            return None
+        pattern = re.compile(
+            r"End *?Time *?: *?([0-9]{4})-([0-9]{2})-([0-9]{2}) *?([0-9]{2}):([0-9]{2}):([0-9]{2})"
+        )
+        res = re.search(pattern, r.text)
+        if res:
+            return cls._to_timestamp(res.groups())
+        return None
 
     @staticmethod
     def _parse_problem_id(text):
