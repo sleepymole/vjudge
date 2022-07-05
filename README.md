@@ -8,7 +8,7 @@ A virtual judge based on scu and hdu online judge.
 * python (3.7+)
 * database (sqlite3 or mysql)
 
-## Quick start
+## Quick Start
 
 1. Clone the repository.
 
