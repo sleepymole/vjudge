@@ -31,7 +31,7 @@ site = "hdu"
 username = "test-user2"
 password = "123456"
 
-# Configure the the contest accounts.
+# Configure the contest accounts.
 [[accounts.contest]]
 # Which site the account is used for. Currently only "hdu" is supported.
 site = "hdu"
