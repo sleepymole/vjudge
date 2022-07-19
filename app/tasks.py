@@ -153,7 +153,7 @@ def refresh_contest_info(self, contest_id):
     core_contest = CoreContest.query.filter_by(site=site, contest_id=cid).first()
     if core_contest is None:
         return
-    core_problems = Problem.query.filter_by(oj_name=contest.clone_name).all()
+    core_problems = CoreProblem.query.filter_by(oj_name=contest.clone_name).all()
 
     contest_json = core_contest.to_json()
     problems = list(p.to_json() for p in core_problems)
