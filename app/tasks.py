@@ -156,7 +156,7 @@ def refresh_contest_info(self, contest_id):
     core_problems = Problem.query.filter_by(oj_name=contest.clone_name).all()
 
     contest_json = core_contest.to_json()
-    problems = core_problems.to_json()
+    problems = list(p.to_json() for p in core_problems)
     contest.title = contest_json.get("title", "")
     contest.public = contest_json.get("public", False)
     contest.status = contest_json.get("status", "Pending")

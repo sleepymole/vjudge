@@ -11,7 +11,7 @@ def init_db():
         admin = User()
         admin.role = Role.query.filter_by(name="Administrator").first()
         admin.username = AppConfig.FLASKY_ADMIN
-        admin.password = '123456'
+        admin.password = "123456"
         db.session.add(admin)
         db.session.commit()
     core_db.create_all()
